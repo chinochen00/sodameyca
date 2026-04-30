@@ -249,6 +249,7 @@ select.finp option{background:var(--bg3)}
   <div class="pin-dots" id="pin-dots">
     <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
     <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    <div class="pin-dot" id="d4"></div><div class="pin-dot" id="d5"></div>
   </div>
   <div class="pin-pad">
     <button class="pin-btn" onclick="pinPress('1')">1</button>
@@ -266,7 +267,7 @@ select.finp option{background:var(--bg3)}
   </div>
   <div class="pin-error" id="pin-error"></div>
   <div class="pin-recover" onclick="startRecover()">Olvide mi PIN</div>
-  <div style="margin-top:14px;font-size:11px;color:var(--t3);text-align:center">PIN por defecto: <strong style="color:var(--t2)">1234</strong></div>
+  <div style="margin-top:14px;font-size:11px;color:var(--t3);text-align:center">PIN por defecto: <strong style="color:var(--t2)">123456</strong></div>
 </div>
 
 <div id="ls" style="display:none"><div class="spin"></div><div id="ls-msg" style="font-size:14px;color:var(--t2)">Cargando...</div></div>
@@ -522,9 +523,9 @@ select.finp option{background:var(--bg3)}
   <div class="sheet"><div class="sheet-handle"></div>
     <div class="sheet-hdr"><div class="sheet-title">Cambiar PIN</div><button class="sheet-close" onclick="closeS('sh-cfg-pin')">&#x2715;</button></div>
     <div class="sheet-body">
-      <div class="frow"><label>PIN actual</label><input class="finp" type="password" inputmode="numeric" maxlength="4" id="cfg-pin-old" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"></div>
-      <div class="frow"><label>Nuevo PIN</label><input class="finp" type="password" inputmode="numeric" maxlength="4" id="cfg-pin-new" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"></div>
-      <div class="frow"><label>Confirmar nuevo PIN</label><input class="finp" type="password" inputmode="numeric" maxlength="4" id="cfg-pin-new2" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"></div>
+      <div class="frow"><label>PIN actual</label><input class="finp" type="password" inputmode="numeric" maxlength="6" id="cfg-pin-old" placeholder="placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;"></div>
+      <div class="frow"><label>Nuevo PIN</label><input class="finp" type="password" inputmode="numeric" maxlength="6" id="cfg-pin-new" placeholder="placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;"></div>
+      <div class="frow"><label>Confirmar nuevo PIN</label><input class="finp" type="password" inputmode="numeric" maxlength="6" id="cfg-pin-new2" placeholder="placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;"></div>
       <div id="cfg-pin-err" style="color:var(--rt);font-size:13px;margin-bottom:12px;min-height:18px"></div>
       <button class="pbtn" onclick="savePinChange()">Guardar PIN</button>
       <button class="sbtn" onclick="closeS('sh-cfg-pin')">Cancelar</button>
@@ -562,8 +563,8 @@ select.finp option{background:var(--bg3)}
       <div class="frow"><label>Tu respuesta</label><input class="finp" type="text" id="rec-ans-inp" placeholder="Escribe tu respuesta..."></div>
       <div id="rec-err" style="color:var(--rt);font-size:13px;margin-bottom:12px;min-height:18px"></div>
       <div id="rec-new-pin-sec" style="display:none">
-        <div class="frow"><label>Nuevo PIN</label><input class="finp" type="password" inputmode="numeric" maxlength="4" id="rec-new-pin" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"></div>
-        <div class="frow"><label>Confirmar</label><input class="finp" type="password" inputmode="numeric" maxlength="4" id="rec-new-pin2" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"></div>
+        <div class="frow"><label>Nuevo PIN</label><input class="finp" type="password" inputmode="numeric" maxlength="6" id="rec-new-pin" placeholder="placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;"></div>
+        <div class="frow"><label>Confirmar</label><input class="finp" type="password" inputmode="numeric" maxlength="6" id="rec-new-pin2" placeholder="placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;"></div>
       </div>
       <button class="pbtn" id="rec-btn" onclick="checkRecovery()">Verificar respuesta</button>
       <button class="sbtn" onclick="closeS('sh-recover')">Cancelar</button>
@@ -587,7 +588,7 @@ select.finp option{background:var(--bg3)}
       </div>
       <div class="frow">
         <label>Confirma tu PIN para continuar</label>
-        <input class="finp" type="password" inputmode="numeric" maxlength="4" id="reset-pin" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;">
+        <input class="finp" type="password" inputmode="numeric" maxlength="6" id="reset-pin" placeholder="placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;placeholder="&#x2022;&#x2022;&#x2022;&#x2022;"#x2022;">
       </div>
       <div id="reset-err" style="color:var(--rt);font-size:13px;margin-bottom:12px;min-height:18px"></div>
       <button class="pbtn" style="background:var(--r2)" onclick="confirmResetOrders()">&#x1F9F9; Borrar todos los pedidos</button>
@@ -634,7 +635,7 @@ document.getElementById('hdate').textContent=now.toLocaleDateString('es-CR',{wee
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
 var PIN_KEY='smc_pin_v2',REC_KEY='smc_recovery';
-var currentPin='',correctPin=localStorage.getItem(PIN_KEY)||'1234',bioAvail=false;
+var currentPin='',correctPin=localStorage.getItem(PIN_KEY)||'123456',bioAvail=false;
 
 if(window.PublicKeyCredential){
   PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(function(ok){
@@ -643,9 +644,9 @@ if(window.PublicKeyCredential){
     if(ok)setTimeout(bioAuth,500);
   }).catch(function(){document.getElementById('bio-status').textContent='No disponible'});
 }
-function pinPress(d){if(currentPin.length>=4)return;currentPin+=d;updateDots();if(currentPin.length===4)setTimeout(checkPin,120)}
+function pinPress(d){if(currentPin.length>=6)return;currentPin+=d;updateDots();if(currentPin.length===6)setTimeout(checkPin,120)}
 function pinDel(){currentPin=currentPin.slice(0,-1);updateDots();document.getElementById('pin-error').textContent=''}
-function updateDots(){for(var i=0;i<4;i++)document.getElementById('d'+i).classList.toggle('filled',i<currentPin.length)}
+function updateDots(){for(var i=0;i<6;i++)document.getElementById('d'+i).classList.toggle('filled',i<currentPin.length)}
 function checkPin(){if(currentPin===correctPin){unlockApp()}else{document.getElementById('pin-error').textContent='PIN incorrecto.';currentPin='';updateDots();if(navigator.vibrate)navigator.vibrate([100,50,100])}}
 function unlockApp(){document.getElementById('login-screen').style.display='none';document.getElementById('ls').style.display='flex';initApp()}
 async function bioAuth(){
@@ -671,7 +672,7 @@ function checkRecovery(){
 }
 function saveRecoveredPin(){
   var p1=document.getElementById('rec-new-pin').value.trim(),p2=document.getElementById('rec-new-pin2').value.trim();
-  if(p1.length!==4||isNaN(p1)){document.getElementById('rec-err').textContent='El PIN debe tener 4 digitos.';return}
+  if(p1.length!==6||isNaN(p1)){document.getElementById('rec-err').textContent='El PIN debe tener 6 digitos.';return}
   if(p1!==p2){document.getElementById('rec-err').textContent='Los PINs no coinciden.';return}
   correctPin=p1;localStorage.setItem(PIN_KEY,p1);closeS('sh-recover');currentPin='';updateDots();unlockApp();
 }
@@ -679,7 +680,7 @@ function openCfgPin(){document.getElementById('cfg-pin-old').value='';document.g
 function savePinChange(){
   var old=document.getElementById('cfg-pin-old').value.trim(),n1=document.getElementById('cfg-pin-new').value.trim(),n2=document.getElementById('cfg-pin-new2').value.trim();
   if(old!==correctPin){document.getElementById('cfg-pin-err').textContent='PIN actual incorrecto.';return}
-  if(n1.length!==4||isNaN(n1)){document.getElementById('cfg-pin-err').textContent='El nuevo PIN debe tener 4 digitos.';return}
+  if(n1.length!==6||isNaN(n1)){document.getElementById('cfg-pin-err').textContent='El nuevo PIN debe tener 6 digitos.';return}
   if(n1!==n2){document.getElementById('cfg-pin-err').textContent='Los PINs no coinciden.';return}
   correctPin=n1;localStorage.setItem(PIN_KEY,n1);closeS('sh-cfg-pin');toast('PIN actualizado');
 }
@@ -1174,6 +1175,9 @@ function rmSz(i){editSz.splice(i,1);renderSED()}
 function saveMI(){
   var code=document.getElementById('fc').value.trim(),name=document.getElementById('fn').value.trim();
   if(!code||!name){alert('Codigo y nombre son obligatorios.');return}
+  // Verificar codigo duplicado (ignorar el platillo actual si es edicion)
+  var duplicate=menu.find(function(m){return m.code.toLowerCase()===code.toLowerCase()&&m.id!==editMId});
+  if(duplicate){alert('El codigo "'+code+'" ya existe en el platillo "'+duplicate.name+'". Usa un codigo diferente.');return}
   var sizes=editSz.map(function(s){return {label:s.label.trim(),price:parseFloat(s.price)||0}}).filter(function(s){return s.price>=0});
   if(!sizes.length){alert('Agrega al menos un precio.');return}
   var obj={id:editMId||nextMId++,code:code,name:name,desc:document.getElementById('fd').value.trim(),cat:document.getElementById('fcat').value,sizes:sizes,avail:parseInt(document.getElementById('fav').value)};
