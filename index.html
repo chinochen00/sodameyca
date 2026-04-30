@@ -329,13 +329,19 @@ select.finp option{background:var(--bg3)}
   <div class="sbar"><input type="text" id="ms" placeholder="Buscar platillo..." oninput="renderM()"></div>
   <div class="seg">
     <button class="sg on" onclick="setMCat('',this)">Todos</button>
-    <button class="sg" onclick="setMCat('Entradas',this)">Entradas</button>
+    <button class="sg" onclick="setMCat('Chop Suey',this)">Chop Suey</button>
+    <button class="sg" onclick="setMCat('Arroz Frito',this)">Arroz Frito</button>
     <button class="sg" onclick="setMCat('Sopas',this)">Sopas</button>
-    <button class="sg" onclick="setMCat('Arroz y fideos',this)">Arroz</button>
+    <button class="sg" onclick="setMCat('Wantan',this)">Wantan</button>
     <button class="sg" onclick="setMCat('Carnes',this)">Carnes</button>
-    <button class="sg" onclick="setMCat('Mariscos',this)">Mariscos</button>
-    <button class="sg" onclick="setMCat('Postres',this)">Postres</button>
+    <button class="sg" onclick="setMCat('Vegetales',this)">Vegetales</button>
+    <button class="sg" onclick="setMCat('Casados chinos',this)">Casados</button>
+    <button class="sg" onclick="setMCat('Tacos chinos',this)">Tacos</button>
+    <button class="sg" onclick="setMCat('Alitas Fritas',this)">Alitas</button>
+    <button class="sg" onclick="setMCat('Comidas Rapidas',this)">Rapidas</button>
+    <button class="sg" onclick="setMCat('Ensaladas',this)">Ensaladas</button>
     <button class="sg" onclick="setMCat('Bebidas',this)">Bebidas</button>
+    <button class="sg" onclick="setMCat('Otros',this)">Otros</button>
   </div>
   <div id="mlist"></div>
 </div>
@@ -494,7 +500,7 @@ select.finp option{background:var(--bg3)}
     <div class="sheet-body">
       <div class="fgrid">
         <div class="frow"><label>Codigo</label><input class="finp" id="fc" placeholder="ej. A01"></div>
-        <div class="frow"><label>Categoria</label><select class="finp" id="fcat"><option>Entradas</option><option>Sopas</option><option>Arroz y fideos</option><option>Carnes</option><option>Mariscos</option><option>Vegetariano</option><option>Postres</option><option>Bebidas</option></select></div>
+        <div class="frow"><label>Categoria</label><select class="finp" id="fcat"><option>Chop Suey</option><option>Arroz Frito</option><option>Sopas</option><option>Wantan</option><option>Carnes</option><option>Vegetales</option><option>Casados chinos</option><option>Tacos chinos</option><option>Alitas Fritas</option><option>Comidas Rapidas</option><option>Ensaladas</option><option>Bebidas</option><option>Otros</option></select></div>
       </div>
       <div class="frow"><label>Nombre</label><input class="finp" id="fn" placeholder="ej. Wonton frito"></div>
       <div class="frow"><label>Descripcion</label><input class="finp" id="fd" placeholder="ej. Wonton relleno con salsa agridulce"></div>
@@ -706,7 +712,7 @@ async function pollForUpdates(){
     lastKnownData=sig;
   }catch(e){}
 }
-function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(pollForUpdates,8000)}
+function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(pollForUpdates,5000)}
 
 function updateOnlineStatus(){
   isOnline=navigator.onLine;
@@ -889,23 +895,46 @@ function renderK(){
 
   // Resumen de platos (solo de ordenes visibles en el filtro actual o todas las activas no completadas)
   var platosSource=kFilter==='all'?visible:visible;
-  var platoCount={};
+  // Agrupar por nombre del plato (sin tamaño) y guardar desglose por tamaño
+  var platoTotal={};   // nombre -> total de unidades
+  var platoTallas={};  // nombre -> {talla: cantidad}
   platosSource.forEach(function(o){
     o.items.forEach(function(i){
-      var key=i.name+(i.sizeLabel?' ('+i.sizeLabel+')':'');
-      platoCount[key]=(platoCount[key]||0)+i.qty;
+      var nombre=i.name;
+      var talla=i.sizeLabel||'';
+      platoTotal[nombre]=(platoTotal[nombre]||0)+i.qty;
+      if(!platoTallas[nombre])platoTallas[nombre]={};
+      platoTallas[nombre][talla]=(platoTallas[nombre][talla]||0)+i.qty;
     });
   });
-  var platoEntries=Object.entries(platoCount).filter(function(e){return e[1]>1}).sort(function(a,b){return b[1]-a[1]});
+  // Solo mostrar platos con total >= 2
+  var platoEntries=Object.entries(platoTotal).filter(function(e){return e[1]>=2}).sort(function(a,b){return b[1]-a[1]});
 
   var resumenHTML='';
   if(platoEntries.length>0){
     resumenHTML='<div style="margin:0 16px 14px;background:#0d1a0d;border:1px solid #2d5a2d;border-radius:14px;padding:14px">'+
       '<div style="font-size:12px;font-weight:700;color:var(--gt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">&#x1F4CA; Platos repetidos — hacer juntos</div>'+
       platoEntries.map(function(e){
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1a3a1a">'+
-          '<span style="font-size:15px;font-weight:600;color:var(--t)">'+e[0]+'</span>'+
-          '<span style="font-size:22px;font-weight:900;color:var(--yelt);background:#1a1200;border:1px solid #6b4800;border-radius:10px;padding:2px 14px">x'+e[1]+'</span>'+
+        var nombre=e[0],total=e[1];
+        var tallas=platoTallas[nombre];
+        var tallaKeys=Object.keys(tallas);
+        // Desglose: solo mostrar si hay mas de un tamaño o si el tamaño tiene nombre
+        var desglose='';
+        if(tallaKeys.length>1||(tallaKeys.length===1&&tallaKeys[0]!=='')){
+          desglose='<div style="margin-top:5px;display:flex;flex-wrap:wrap;gap:6px">'+
+            tallaKeys.map(function(t){
+              return '<span style="font-size:12px;background:#1a2d1a;border:1px solid #2d5a2d;border-radius:8px;padding:2px 10px;color:var(--gt)">'+
+                (t||'Estandar')+' x'+tallas[t]+
+              '</span>';
+            }).join('')+
+          '</div>';
+        }
+        return '<div style="padding:9px 0;border-bottom:1px solid #1a3a1a">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between">'+
+            '<span style="font-size:16px;font-weight:700;color:var(--t)">'+nombre+'</span>'+
+            '<span style="font-size:24px;font-weight:900;color:var(--yelt);background:#1a1200;border:1px solid #6b4800;border-radius:10px;padding:2px 16px">x'+total+'</span>'+
+          '</div>'+
+          desglose+
         '</div>';
       }).join('')+
     '</div>';
@@ -1076,7 +1105,7 @@ function openMM(id){
   editMId=id||null;var m=id?menu.find(function(x){return x.id===id}):null;
   document.getElementById('sh-mm-t').textContent=id?'Editar platillo':'Agregar platillo';
   document.getElementById('fc').value=m?m.code:'';document.getElementById('fn').value=m?m.name:'';
-  document.getElementById('fd').value=m?m.desc:'';document.getElementById('fcat').value=m?m.cat:'Entradas';
+  document.getElementById('fd').value=m?m.desc:'';document.getElementById('fcat').value=m?m.cat:'Chop Suey';
   document.getElementById('fav').value=m?(m.avail?'1':'0'):'1';
   editSz=m?m.sizes.map(function(s){return Object.assign({},s)}):[{label:'',price:0}];renderSED();openS('sh-mm');
 }
