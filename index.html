@@ -17,7 +17,7 @@
   --b:#2a2a2a;--b2:#3a3a3a;--t:#f0f0f0;--t2:#888;--t3:#555;
   --red:#e53e3e;--r2:#c53030;--rbg:#2d1010;--rt:#fc8181;
   --grn:#22c55e;--gbg:#0d2d1a;--gt:#4ade80;
-  --blu:#3b82f6;--mod:#1a1a1a;
+  --blu:#3b82f6;--mod:#1a1a1a;--yel:#f59e0b;
 }
 html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;position:fixed;width:100%}
 #wrap{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%}
@@ -28,6 +28,10 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-sys
 .ni{font-size:24px;line-height:1}
 .nl{font-size:10px;font-weight:500;letter-spacing:.3px}
 .pg{display:none}.pg.on{display:block}
+/* STATUS BAR OFFLINE */
+#status-bar{display:none;background:#1a1200;border-bottom:1px solid var(--yel);padding:8px 16px;font-size:12px;font-weight:600;color:var(--yel);text-align:center;position:sticky;top:0;z-index:50}
+#status-bar.show{display:block}
+#status-bar.syncing{background:#0d2d1a;border-color:var(--grn);color:var(--gt)}
 .hdr{text-align:center;padding:20px 16px 16px;border-bottom:1px solid var(--b)}
 .hdr img{width:68px;height:68px;border-radius:50%;object-fit:cover;border:2px solid var(--red);display:block;margin:0 auto 10px}
 .hdr-name{font-size:21px;font-weight:700;color:var(--t)}
@@ -52,12 +56,11 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-sys
 .oc-btn:active{transform:scale(.97)}
 .btn-e{background:#1a2d1a;color:var(--gt)}
 .btn-p{background:var(--red);color:#fff}
-/* HISTORIAL */
 .h-search-bar{padding:0 16px 10px;display:flex;gap:8px}
 .h-search-bar input{flex:1;background:var(--bg3);border:1px solid var(--b2);border-radius:12px;padding:11px 14px;font-size:14px;color:var(--t);font-family:inherit}
 .h-search-bar input::placeholder{color:var(--t3)}
 .h-date-group{margin:0 16px 12px}
-.h-date-label{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;padding:8px 0 6px;border-bottom:1px solid var(--b2);margin-bottom:4px}
+.h-date-label{font-size:12px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;padding:8px 0 6px;border-bottom:1px solid var(--b2);margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
 .hrow{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--b)}
 .hrow:last-child{border-bottom:none}
 .htag{display:inline-block;background:var(--bg3);border:1px solid var(--b2);border-radius:99px;padding:1px 8px;font-size:10px;color:var(--t2);margin-left:4px}
@@ -141,7 +144,7 @@ select.finp option{background:var(--bg3)}
 @keyframes sp{to{transform:rotate(360deg)}}
 #toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#1a2d1a;border:1px solid var(--grn);border-radius:12px;padding:10px 18px;font-size:13px;color:var(--gt);font-weight:600;opacity:0;transition:opacity .3s;z-index:500;white-space:nowrap;pointer-events:none}
 #toast.err{background:var(--rbg);border-color:var(--red);color:var(--rt)}
-/* confirm dialog */
+#toast.warn{background:#1a1200;border-color:var(--yel);color:var(--yel)}
 .confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;align-items:center;justify-content:center;padding:20px}
 .confirm-bg.on{display:flex}
 .confirm-box{background:var(--mod);border:1px solid var(--b2);border-radius:18px;padding:24px 20px;width:100%;max-width:320px;text-align:center}
@@ -155,14 +158,13 @@ select.finp option{background:var(--bg3)}
 </head>
 <body>
 
-<div id="ls"><div class="spin"></div><div id="ls-msg" style="font-size:14px;color:var(--t2)">Conectando...</div></div>
+<div id="ls"><div class="spin"></div><div id="ls-msg" style="font-size:14px;color:var(--t2)">Cargando...</div></div>
 <div id="toast"></div>
 
-<!-- Confirm dialog -->
 <div class="confirm-bg" id="confirm-bg">
   <div class="confirm-box">
     <div class="confirm-title">Eliminar orden</div>
-    <div class="confirm-sub" id="confirm-msg">Esta accion no se puede deshacer. El total se restara de los reportes.</div>
+    <div class="confirm-sub" id="confirm-msg">Esta accion no se puede deshacer.</div>
     <div class="confirm-btns">
       <button class="confirm-cancel" onclick="closeConfirm()">Cancelar</button>
       <button class="confirm-del" onclick="confirmDelete()">Eliminar</button>
@@ -171,9 +173,11 @@ select.finp option{background:var(--bg3)}
 </div>
 
 <div id="wrap" style="display:none">
-<div id="screen">
 
-<!-- ORDENES -->
+<!-- Barra de estado offline -->
+<div id="status-bar">&#x26A1; Sin internet &mdash; Los cambios se guardan localmente y se sincronizaran al recuperar conexion</div>
+
+<div id="screen">
 <div class="pg on" id="pg-o">
   <div class="hdr">
     <img id="logo" alt="Logo">
@@ -189,8 +193,6 @@ select.finp option{background:var(--bg3)}
   <button class="fab" onclick="openOM(null)"><span style="font-size:20px">+</span> Nueva orden</button>
   <div class="stitle">Ordenes activas</div>
   <div id="alist"><div class="empty">No hay ordenes activas</div></div>
-
-  <!-- HISTORIAL con busqueda -->
   <div class="stitle" style="margin-top:8px">Historial</div>
   <div class="h-search-bar">
     <input type="text" id="h-search" placeholder="Buscar por orden, cliente o fecha..." oninput="renderH()">
@@ -198,7 +200,6 @@ select.finp option{background:var(--bg3)}
   <div id="hlist"></div>
 </div>
 
-<!-- MENU -->
 <div class="pg" id="pg-m">
   <div class="stitle" style="padding-top:20px">Menu<button class="stitle-btn" onclick="openMM(null)">+ Agregar</button></div>
   <div class="sbar"><input type="text" id="ms" placeholder="Buscar platillo..." oninput="renderM()"></div>
@@ -215,7 +216,6 @@ select.finp option{background:var(--bg3)}
   <div id="mlist"></div>
 </div>
 
-<!-- REPORTES -->
 <div class="pg" id="pg-r">
   <div class="stitle" style="padding-top:20px">Reportes</div>
   <div class="seg" id="rep-seg">
@@ -232,7 +232,6 @@ select.finp option{background:var(--bg3)}
   <div style="margin:0 16px 14px;background:var(--bg2);border:1px solid var(--b2);border-radius:16px;padding:14px"><div id="rtop"></div></div>
   <button class="exp-btn" onclick="exportCSV()">&#11015; Exportar CSV</button>
 </div>
-
 </div><!-- /screen -->
 
 <div id="nav">
@@ -242,14 +241,11 @@ select.finp option{background:var(--bg3)}
 </div>
 </div>
 
-<!-- SHEET ORDEN -->
+<!-- SHEETS -->
 <div class="sheet-bg" id="sh-om">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-hdr">
-      <div class="sheet-title" id="sh-om-t">Nueva orden</div>
-      <button class="sheet-close" onclick="closeS('sh-om')">&#x2715;</button>
-    </div>
+    <div class="sheet-hdr"><div class="sheet-title" id="sh-om-t">Nueva orden</div><button class="sheet-close" onclick="closeS('sh-om')">&#x2715;</button></div>
     <div class="sheet-body">
       <div class="frow"><label>Cliente (opcional)</label><input class="finp" type="text" id="ocl" placeholder="ej. Maria Gonzalez"></div>
       <div id="vlist">
@@ -272,14 +268,10 @@ select.finp option{background:var(--bg3)}
   </div>
 </div>
 
-<!-- SHEET COBRO -->
 <div class="sheet-bg" id="sh-pm">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-hdr">
-      <div class="sheet-title">Cobrar orden</div>
-      <button class="sheet-close" onclick="closeS('sh-pm')">&#x2715;</button>
-    </div>
+    <div class="sheet-hdr"><div class="sheet-title">Cobrar orden</div><button class="sheet-close" onclick="closeS('sh-pm')">&#x2715;</button></div>
     <div class="sheet-body">
       <div style="font-size:13px;color:var(--t2);margin-bottom:4px" id="pm-cd"></div>
       <div class="tot-val" style="font-size:28px;margin-bottom:18px" id="pm-tt"></div>
@@ -300,14 +292,10 @@ select.finp option{background:var(--bg3)}
   </div>
 </div>
 
-<!-- SHEET RECIBO -->
 <div class="sheet-bg" id="sh-rm">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-hdr">
-      <div class="sheet-title">Recibo</div>
-      <button class="sheet-close" onclick="closeS('sh-rm')">&#x2715;</button>
-    </div>
+    <div class="sheet-hdr"><div class="sheet-title">Recibo</div><button class="sheet-close" onclick="closeS('sh-rm')">&#x2715;</button></div>
     <div class="sheet-body">
       <div id="rprint" style="background:var(--mod)">
         <div style="text-align:center;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--b2)">
@@ -340,14 +328,10 @@ select.finp option{background:var(--bg3)}
   </div>
 </div>
 
-<!-- SHEET MENU ITEM -->
 <div class="sheet-bg" id="sh-mm">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-hdr">
-      <div class="sheet-title" id="sh-mm-t">Agregar platillo</div>
-      <button class="sheet-close" onclick="closeS('sh-mm')">&#x2715;</button>
-    </div>
+    <div class="sheet-hdr"><div class="sheet-title" id="sh-mm-t">Agregar platillo</div><button class="sheet-close" onclick="closeS('sh-mm')">&#x2715;</button></div>
     <div class="sheet-body">
       <div class="fgrid">
         <div class="frow"><label>Codigo</label><input class="finp" id="fc" placeholder="ej. A01"></div>
@@ -368,75 +352,243 @@ select.finp option{background:var(--bg3)}
 </div>
 
 <script>
+// ── CREDENCIALES ──────────────────────────────────────────────────────────────
 var API_KEY='$2a$10$SUbOUmWZ70YY9LsNWI8aLuT0/sR3VjyVWI12BSRGAC9wvBktqsLeK';
 var BIN_ID='69f17220856a68218985386b';
 var BIN_URL='https://api.jsonbin.io/v3/b/'+BIN_ID;
 var HDR_R={'X-Master-Key':API_KEY,'X-Bin-Meta':'false'};
 var HDR_W={'Content-Type':'application/json','X-Master-Key':API_KEY};
 
+// ── LOGO ──────────────────────────────────────────────────────────────────────
 var LOGO='data:image/jpeg;base64,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';
-
 document.getElementById('logo').src=LOGO;
 document.getElementById('rlogo').src=LOGO;
 
-function toast(msg,err){var e=document.getElementById('toast');e.textContent=msg;e.className=err?'err':'';e.style.opacity='1';setTimeout(function(){e.style.opacity='0'},2500)}
+// ── UTILIDADES ────────────────────────────────────────────────────────────────
+function toast(msg,type){
+  var e=document.getElementById('toast');
+  e.textContent=msg;
+  e.className=type||'';
+  e.style.opacity='1';
+  setTimeout(function(){e.style.opacity='0'},2800);
+}
 function fmt(n){return'\u20A1'+Math.round(parseFloat(n)).toLocaleString('es-CR')}
 function closeS(id){document.getElementById(id).classList.remove('on');if(id==='sh-om')backL()}
 function openS(id){document.getElementById(id).classList.add('on')}
 
+// ── RELOJ ─────────────────────────────────────────────────────────────────────
 setInterval(function(){document.getElementById('htime').textContent=new Date().toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
 document.getElementById('htime').textContent=new Date().toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
 var now=new Date(),todayStr=now.toISOString().slice(0,10);
 document.getElementById('hdate').textContent=now.toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
+// ── ESTADO GLOBAL ─────────────────────────────────────────────────────────────
 var menu=[],aOrds=[],cOrds=[];
 var nextOId=1,nextMId=13;
 var editSz=[],editMId=null,curItems=[],repM='d',payM='Efectivo',payOId=null,editOId=null,mCat='';
 var saveTimer=null;
 var pendingDeleteId=null;
+var isOnline=navigator.onLine;
+var pendingSync=false;  // hay cambios locales sin subir a la nube
 
-async function loadCloud(){var r=await fetch(BIN_URL,{headers:HDR_R});if(!r.ok)throw new Error('HTTP '+r.status);var d=await r.json();return d.record||d}
-async function saveCloud(){var r=await fetch(BIN_URL,{method:'PUT',headers:HDR_W,body:JSON.stringify({menu:menu,activeOrders:aOrds,closedOrders:cOrds,nextOId:nextOId,nextMId:nextMId})});if(!r.ok)throw new Error('HTTP '+r.status)}
-function sched(){clearTimeout(saveTimer);saveTimer=setTimeout(async function(){try{await saveCloud();toast('Guardado')}catch(e){toast('Error al guardar',true)}},800)}
+// ── LOCAL STORAGE (fallback offline) ─────────────────────────────────────────
+var LS_KEY='sodameyca_data';
 
-(async function(){
+function saveLocal(){
   try{
-    document.getElementById('ls-msg').textContent='Cargando datos...';
-    var d=await loadCloud();
-    menu=d.menu||[];
-    aOrds=(d.activeOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
-    cOrds=(d.closedOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
-    nextOId=d.nextOId||1;nextMId=d.nextMId||13;
-    if(!menu.length){
-      menu=[
-        {id:1,code:'E01',name:'Wonton frito',desc:'Wontons rellenos de cerdo fritos',cat:'Entradas',sizes:[{label:'Medio',price:2500},{label:'Entero',price:4500}],avail:1},
-        {id:2,code:'E02',name:'Rollitos primavera',desc:'Rollitos crujientes con verduras',cat:'Entradas',sizes:[{label:'',price:2800}],avail:1},
-        {id:3,code:'S01',name:'Sopa wonton',desc:'Caldo de pollo con wontons',cat:'Sopas',sizes:[{label:'',price:3200}],avail:1},
-        {id:4,code:'S02',name:'Sopa agripicante',desc:'Sopa con tofu, setas y vinagre',cat:'Sopas',sizes:[{label:'',price:3500}],avail:1},
-        {id:5,code:'AF01',name:'Arroz frito especial',desc:'Arroz frito con camarones y verduras',cat:'Arroz y fideos',sizes:[{label:'Medio',price:3800},{label:'Entero',price:5000}],avail:1},
-        {id:6,code:'AF02',name:'Chow mein de pollo',desc:'Fideos salteados con pollo',cat:'Arroz y fideos',sizes:[{label:'Medio',price:4000},{label:'Entero',price:5200}],avail:1},
-        {id:7,code:'C01',name:'Pollo a la naranja',desc:'Pollo crujiente en salsa de naranja',cat:'Carnes',sizes:[{label:'',price:6500}],avail:1},
-        {id:8,code:'C02',name:'Cerdo agridulce',desc:'Cerdo en salsa agridulce con pina',cat:'Carnes',sizes:[{label:'',price:6800}],avail:1},
-        {id:9,code:'M01',name:'Camarones al ajo',desc:'Camarones salteados con ajo',cat:'Mariscos',sizes:[{label:'',price:8500}],avail:1},
-        {id:10,code:'P01',name:'Pastel de luna',desc:'Pastel tradicional chino',cat:'Postres',sizes:[{label:'',price:1800}],avail:1},
-        {id:11,code:'B01',name:'Te de jazmin',desc:'Te de jazmin caliente o frio',cat:'Bebidas',sizes:[{label:'',price:1200}],avail:1},
-        {id:12,code:'B02',name:'Agua de coco',desc:'Agua de coco natural fria',cat:'Bebidas',sizes:[{label:'',price:1500}],avail:1}
-      ];
-      nextMId=13;await saveCloud();
+    localStorage.setItem(LS_KEY, JSON.stringify({
+      menu:menu, activeOrders:aOrds, closedOrders:cOrds,
+      nextOId:nextOId, nextMId:nextMId, pendingSync:true
+    }));
+  }catch(e){console.warn('localStorage error',e)}
+}
+
+function loadLocal(){
+  try{
+    var raw=localStorage.getItem(LS_KEY);
+    if(!raw)return null;
+    return JSON.parse(raw);
+  }catch(e){return null}
+}
+
+function clearPendingSync(){
+  try{
+    var raw=localStorage.getItem(LS_KEY);
+    if(raw){
+      var d=JSON.parse(raw);
+      d.pendingSync=false;
+      localStorage.setItem(LS_KEY,JSON.stringify(d));
     }
-  }catch(e){document.getElementById('ls-msg').textContent='Error: '+e.message;await new Promise(function(r){setTimeout(r,3000)})}
+  }catch(e){}
+  pendingSync=false;
+}
+
+// ── NUBE (JSONBin) ────────────────────────────────────────────────────────────
+async function loadCloud(){
+  var r=await fetch(BIN_URL,{headers:HDR_R});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  var d=await r.json();
+  return d.record||d;
+}
+
+async function saveCloud(){
+  var payload={menu:menu,activeOrders:aOrds,closedOrders:cOrds,nextOId:nextOId,nextMId:nextMId};
+  var r=await fetch(BIN_URL,{method:'PUT',headers:HDR_W,body:JSON.stringify(payload)});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+}
+
+// ── GUARDAR: local siempre, nube si hay internet ──────────────────────────────
+function sched(){
+  // Siempre guardar local
+  pendingSync=true;
+  saveLocal();
+  // Intentar nube si hay internet
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async function(){
+    if(!isOnline){
+      toast('Guardado localmente \u2014 se sincronizara al recuperar internet','warn');
+      return;
+    }
+    try{
+      await saveCloud();
+      clearPendingSync();
+      saveLocal();
+      toast('Guardado en la nube');
+    }catch(e){
+      toast('Guardado localmente (error de red)','warn');
+    }
+  },800);
+}
+
+// ── SINCRONIZACION AUTOMATICA cuando vuelve el internet ─────────────────────
+async function syncToCloud(){
+  if(!pendingSync)return;
+  var sb=document.getElementById('status-bar');
+  sb.textContent='&#x1F504; Sincronizando con la nube...';
+  sb.className='show syncing';
+  try{
+    await saveCloud();
+    clearPendingSync();
+    saveLocal();
+    toast('Datos sincronizados con la nube');
+    setTimeout(function(){sb.classList.remove('show')},3000);
+  }catch(e){
+    sb.textContent='\u26A1 Sin internet \u2014 Los cambios se guardan localmente';
+    sb.className='show';
+  }
+}
+
+function updateOnlineStatus(){
+  isOnline=navigator.onLine;
+  var sb=document.getElementById('status-bar');
+  if(!isOnline){
+    sb.innerHTML='\u26A1 Sin internet &mdash; Los cambios se guardan localmente y se sincronizaran al recuperar conexion';
+    sb.className='show';
+  }else{
+    // Volvio internet
+    if(pendingSync){
+      syncToCloud();
+    }else{
+      sb.classList.remove('show');
+    }
+  }
+}
+
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+
+// ── INICIALIZACION ────────────────────────────────────────────────────────────
+(async function(){
+  var lsData=loadLocal();
+  var loadedFromLocal=false;
+
+  if(!navigator.onLine){
+    // Sin internet: cargar desde localStorage
+    if(lsData&&lsData.menu&&lsData.menu.length){
+      menu=lsData.menu;
+      aOrds=(lsData.activeOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
+      cOrds=(lsData.closedOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
+      nextOId=lsData.nextOId||1;
+      nextMId=lsData.nextMId||13;
+      pendingSync=lsData.pendingSync||false;
+      loadedFromLocal=true;
+      document.getElementById('ls-msg').textContent='Cargado desde memoria local';
+      await new Promise(function(r){setTimeout(r,600)});
+    }else{
+      document.getElementById('ls-msg').textContent='Sin internet y sin datos locales';
+      await new Promise(function(r){setTimeout(r,2000)});
+    }
+  }else{
+    // Con internet: intentar nube, fallback a local
+    try{
+      document.getElementById('ls-msg').textContent='Conectando a la nube...';
+      var d=await loadCloud();
+      menu=d.menu||[];
+      aOrds=(d.activeOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
+      cOrds=(d.closedOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
+      nextOId=d.nextOId||1;
+      nextMId=d.nextMId||13;
+      // Si habia datos locales pendientes, fusionar con cuidado
+      if(lsData&&lsData.pendingSync){
+        toast('Datos sincronizados','');
+      }
+      saveLocal();
+      clearPendingSync();
+    }catch(e){
+      // Nube falló, usar local
+      if(lsData&&lsData.menu&&lsData.menu.length){
+        menu=lsData.menu;
+        aOrds=(lsData.activeOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
+        cOrds=(lsData.closedOrders||[]).map(function(o){return Object.assign({},o,{date:new Date(o.date)})});
+        nextOId=lsData.nextOId||1;
+        nextMId=lsData.nextMId||13;
+        pendingSync=true;
+        loadedFromLocal=true;
+      }
+    }
+  }
+
+  // Menu por defecto si no hay nada
+  if(!menu.length){
+    menu=[
+      {id:1,code:'E01',name:'Wonton frito',desc:'Wontons rellenos de cerdo fritos',cat:'Entradas',sizes:[{label:'Medio',price:2500},{label:'Entero',price:4500}],avail:1},
+      {id:2,code:'E02',name:'Rollitos primavera',desc:'Rollitos crujientes con verduras',cat:'Entradas',sizes:[{label:'',price:2800}],avail:1},
+      {id:3,code:'S01',name:'Sopa wonton',desc:'Caldo de pollo con wontons',cat:'Sopas',sizes:[{label:'',price:3200}],avail:1},
+      {id:4,code:'S02',name:'Sopa agripicante',desc:'Sopa con tofu, setas y vinagre',cat:'Sopas',sizes:[{label:'',price:3500}],avail:1},
+      {id:5,code:'AF01',name:'Arroz frito especial',desc:'Arroz frito con camarones y verduras',cat:'Arroz y fideos',sizes:[{label:'Medio',price:3800},{label:'Entero',price:5000}],avail:1},
+      {id:6,code:'AF02',name:'Chow mein de pollo',desc:'Fideos salteados con pollo',cat:'Arroz y fideos',sizes:[{label:'Medio',price:4000},{label:'Entero',price:5200}],avail:1},
+      {id:7,code:'C01',name:'Pollo a la naranja',desc:'Pollo crujiente en salsa de naranja',cat:'Carnes',sizes:[{label:'',price:6500}],avail:1},
+      {id:8,code:'C02',name:'Cerdo agridulce',desc:'Cerdo en salsa agridulce con pina',cat:'Carnes',sizes:[{label:'',price:6800}],avail:1},
+      {id:9,code:'M01',name:'Camarones al ajo',desc:'Camarones salteados con ajo',cat:'Mariscos',sizes:[{label:'',price:8500}],avail:1},
+      {id:10,code:'P01',name:'Pastel de luna',desc:'Pastel tradicional chino',cat:'Postres',sizes:[{label:'',price:1800}],avail:1},
+      {id:11,code:'B01',name:'Te de jazmin',desc:'Te de jazmin caliente o frio',cat:'Bebidas',sizes:[{label:'',price:1200}],avail:1},
+      {id:12,code:'B02',name:'Agua de coco',desc:'Agua de coco natural fria',cat:'Bebidas',sizes:[{label:'',price:1500}],avail:1}
+    ];
+    nextMId=13;
+    if(isOnline){try{await saveCloud()}catch(e){}}
+    saveLocal();
+  }
+
   document.getElementById('ls').style.display='none';
   document.getElementById('wrap').style.display='flex';
+  updateOnlineStatus();
   renderA();renderMet();renderH();renderR();renderM();
 })();
 
-// register service worker
+// Service Worker
 if('serviceWorker' in navigator){
   window.addEventListener('load',function(){
-    navigator.serviceWorker.register('sw.js').then(function(){console.log('SW registered')}).catch(function(e){console.log('SW error',e)});
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      console.log('SW OK');
+      // Escuchar mensajes del SW
+      navigator.serviceWorker.addEventListener('message',function(e){
+        if(e.data&&e.data.type==='SYNC_NOW'){syncToCloud()}
+      });
+    }).catch(function(e){console.warn('SW err',e)});
   });
 }
 
+// ── NAVEGACIÓN ────────────────────────────────────────────────────────────────
 function goTab(t,btn){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
   document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on')});
@@ -447,6 +599,7 @@ function goTab(t,btn){
 }
 function genCode(){return'ORD-'+String(nextOId).padStart(4,'0')}
 
+// ── ORDEN ─────────────────────────────────────────────────────────────────────
 function openOM(oid){
   editOId=oid!==null&&oid!==undefined?oid:null;
   var ex=editOId!==null?aOrds.find(function(x){return x.id===editOId}):null;
@@ -507,9 +660,10 @@ function saveO(){
   sched();closeS('sh-om');renderA();renderMet();
 }
 
+// ── COBRO ─────────────────────────────────────────────────────────────────────
 function openPM(oid){
   payOId=oid;var o=aOrds.find(function(x){return x.id===oid});
-  document.getElementById('pm-cd').textContent=o.code+(o.client?' · '+o.client:'');
+  document.getElementById('pm-cd').textContent=o.code+(o.client?' \u00b7 '+o.client:'');
   document.getElementById('pm-tt').textContent=fmt(o.total);
   document.getElementById('monto').value='';document.getElementById('vuelto').textContent=fmt(0);
   selPay('Efectivo');openS('sh-pm');
@@ -530,6 +684,7 @@ function doPay(){
   sched();closeS('sh-pm');showReceipt(o.id);renderA();renderMet();renderH();renderR();
 }
 
+// ── ÓRDENES ACTIVAS ───────────────────────────────────────────────────────────
 function renderA(){
   var el=document.getElementById('alist');
   if(!aOrds.length){el.innerHTML='<div class="empty">No hay ordenes activas</div>';return}
@@ -546,11 +701,11 @@ function renderMet(){
   document.getElementById('mc3').textContent=fmt(cob.length?tot/cob.length:0);
 }
 
-// ── ELIMINAR ORDEN DEL HISTORIAL ──────────────────────────────────────────────
+// ── ELIMINAR DEL HISTORIAL ───────────────────────────────────────────────────
 function askDelete(oid){
   pendingDeleteId=oid;
   var o=cOrds.find(function(x){return x.id===oid});
-  document.getElementById('confirm-msg').textContent='Orden '+o.code+(o.client?' ('+o.client+')':'')+' por '+fmt(o.total)+'. Esta accion restara este monto de los reportes.';
+  document.getElementById('confirm-msg').textContent='Orden '+o.code+(o.client?' ('+o.client+')':'')+' por '+fmt(o.total)+'. Se restara de los reportes.';
   document.getElementById('confirm-bg').classList.add('on');
 }
 function closeConfirm(){pendingDeleteId=null;document.getElementById('confirm-bg').classList.remove('on')}
@@ -558,45 +713,26 @@ function confirmDelete(){
   if(pendingDeleteId===null)return;
   var idx=cOrds.findIndex(function(x){return x.id===pendingDeleteId});
   if(idx>=0)cOrds.splice(idx,1);
-  closeConfirm();
-  sched();
-  renderH();renderMet();renderR();
+  closeConfirm();sched();renderH();renderMet();renderR();
   toast('Orden eliminada');
 }
 
-// ── HISTORIAL con agrupacion por dia y busqueda ───────────────────────────────
+// ── HISTORIAL ────────────────────────────────────────────────────────────────
 function renderH(){
   var q=(document.getElementById('h-search').value||'').toLowerCase().trim();
   var el=document.getElementById('hlist');
-
-  // Filtrar
   var filtered=cOrds.filter(function(o){
     if(!q)return true;
-    var dateStr=o.date.toLocaleDateString('es-CR',{year:'numeric',month:'long',day:'numeric'}).toLowerCase();
-    return o.code.toLowerCase().includes(q)||
-      (o.client||'').toLowerCase().includes(q)||
-      dateStr.includes(q)||
-      o.dateStr.includes(q);
+    var ds=o.date.toLocaleDateString('es-CR',{year:'numeric',month:'long',day:'numeric'}).toLowerCase();
+    return o.code.toLowerCase().includes(q)||(o.client||'').toLowerCase().includes(q)||ds.includes(q)||o.dateStr.includes(q);
   });
-
-  if(!filtered.length){
-    el.innerHTML='<div class="empty">Sin resultados</div>';
-    return;
-  }
-
-  // Agrupar por dia
-  var groups={};
-  var groupOrder=[];
+  if(!filtered.length){el.innerHTML='<div class="empty">Sin resultados</div>';return}
+  var groups={},groupOrder=[];
   filtered.forEach(function(o){
-    if(!groups[o.dateStr]){
-      groups[o.dateStr]=[];
-      groupOrder.push(o.dateStr);
-    }
+    if(!groups[o.dateStr]){groups[o.dateStr]=[];groupOrder.push(o.dateStr)}
     groups[o.dateStr].push(o);
   });
-  // Ordenar dias: mas reciente primero
   groupOrder.sort(function(a,b){return b.localeCompare(a)});
-
   el.innerHTML=groupOrder.map(function(ds){
     var label=new Date(ds+'T12:00:00').toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     var dayTotal=groups[ds].reduce(function(a,o){return a+o.total},0);
@@ -618,17 +754,14 @@ function renderH(){
         '</div>'+
       '</div>';
     }).join('');
-
     return '<div class="h-date-group">'+
-      '<div class="h-date-label" style="display:flex;justify-content:space-between;align-items:center">'+
-        '<span>'+label+'</span>'+
-        '<span style="font-size:12px;color:var(--grn);font-weight:700">'+fmt(dayTotal)+'</span>'+
-      '</div>'+
+      '<div class="h-date-label"><span>'+label+'</span><span style="color:var(--grn);font-weight:700">'+fmt(dayTotal)+'</span></div>'+
       '<div style="background:var(--bg2);border:1px solid var(--b2);border-radius:14px;overflow:hidden;padding:0 14px">'+rows+'</div>'+
     '</div>';
   }).join('');
 }
 
+// ── RECIBO ────────────────────────────────────────────────────────────────────
 function showReceipt(oid){
   var o=[].concat(aOrds,cOrds).find(function(x){return x.id===oid});if(!o)return;
   document.getElementById('rdt').textContent=o.date.toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+' \u00b7 '+o.date.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'});
@@ -647,6 +780,7 @@ function showReceipt(oid){
   openS('sh-rm');
 }
 
+// ── MENÚ ──────────────────────────────────────────────────────────────────────
 function setMCat(cat,btn){mCat=cat;document.querySelectorAll('.sg').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');renderM()}
 function renderM(){
   var q=document.getElementById('ms').value.toLowerCase();
@@ -682,6 +816,7 @@ function saveMI(){
   sched();closeS('sh-mm');renderM();renderOL();
 }
 
+// ── CSV ───────────────────────────────────────────────────────────────────────
 function exportCSV(){
   if(!cOrds.length){alert('No hay ordenes cobradas para exportar.');return}
   var rows=[['Codigo','Fecha','Hora','Cliente','Pago','Items','Total','Recibido','Vuelto']];
@@ -690,6 +825,7 @@ function exportCSV(){
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download='sodameyca_'+todayStr+'.csv';document.body.appendChild(a);a.click();document.body.removeChild(a);
 }
 
+// ── REPORTES ──────────────────────────────────────────────────────────────────
 function setRep(m,btn){repM=m;document.querySelectorAll('#rep-seg .sg').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');renderR()}
 function renderR(){
   var n=new Date(),g={},labels=[],title='';
