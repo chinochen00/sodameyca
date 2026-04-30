@@ -376,6 +376,7 @@ select.finp option{background:var(--bg3)}
   <div style="margin:0 16px 20px;border:1px solid var(--b2);border-radius:14px;overflow:hidden">
     <div class="cfg-row" onclick="exportCSV()"><div><div class="cfg-lbl">&#x1F4CA; Exportar CSV</div><div class="cfg-sub">Descargar historial</div></div><span class="cfg-arrow">›</span></div>
     <div class="cfg-row" onclick="forcSync()"><div><div class="cfg-lbl">&#x1F504; Sincronizar ahora</div><div class="cfg-sub">Forzar sincronizacion con la nube</div></div><span class="cfg-arrow">›</span></div>
+    <div class="cfg-row" onclick="openResetOrders()" style="border-top:1px solid var(--rbg)"><div><div class="cfg-lbl" style="color:var(--rt)">&#x1F9F9; Borrar todos los pedidos</div><div class="cfg-sub">Elimina ordenes activas e historial. El menu no cambia.</div></div><span class="cfg-arrow" style="color:var(--rt)">›</span></div>
   </div>
   <div style="text-align:center;padding:20px;font-size:12px;color:var(--t3)">Soda Mey Ca v4.0</div>
 </div>
@@ -570,6 +571,31 @@ select.finp option{background:var(--bg3)}
   </div>
 </div>
 
+<!-- SHEET RESET PEDIDOS -->
+<div class="sheet-bg" id="sh-reset">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-hdr">
+      <div class="sheet-title" style="color:var(--rt)">&#x26A0;&#xFE0F; Borrar todos los pedidos</div>
+      <button class="sheet-close" onclick="closeS('sh-reset')">&#x2715;</button>
+    </div>
+    <div class="sheet-body">
+      <div style="background:var(--rbg);border:1px solid #7f1d1d;border-radius:12px;padding:14px;margin-bottom:18px;font-size:13px;color:var(--rt);line-height:1.6">
+        <strong>Esta accion no se puede deshacer.</strong><br>
+        Se eliminaran todas las ordenes activas y el historial completo.<br>
+        El menu <strong>no</strong> sera afectado.
+      </div>
+      <div class="frow">
+        <label>Confirma tu PIN para continuar</label>
+        <input class="finp" type="password" inputmode="numeric" maxlength="4" id="reset-pin" placeholder="&#x2022;&#x2022;&#x2022;&#x2022;">
+      </div>
+      <div id="reset-err" style="color:var(--rt);font-size:13px;margin-bottom:12px;min-height:18px"></div>
+      <button class="pbtn" style="background:var(--r2)" onclick="confirmResetOrders()">&#x1F9F9; Borrar todos los pedidos</button>
+      <button class="sbtn" onclick="closeS('sh-reset')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 var API_KEY='$2a$10$SUbOUmWZ70YY9LsNWI8aLuT0/sR3VjyVWI12BSRGAC9wvBktqsLeK';
 var BIN_ID='69f17220856a68218985386b';
@@ -665,6 +691,35 @@ function openCfgRecovery(){
 function saveRecovery(){var q=document.getElementById('rec-question').value,a=document.getElementById('rec-answer').value.trim();if(!a){document.getElementById('cfg-rec-err').textContent='Escribe una respuesta.';return}localStorage.setItem(REC_KEY,JSON.stringify({question:q,answer:a}));closeS('sh-cfg-rec');toast('Pregunta secreta guardada')}
 function bioSetup(){if(!bioAvail){alert('La biometria no esta disponible en este dispositivo.');return}bioAuth()}
 function forcSync(){if(isOnline){pendingSync=true;syncToCloud()}else{toast('Sin conexion a internet','warn')}}
+function openResetOrders(){
+  document.getElementById('reset-pin').value='';
+  document.getElementById('reset-err').textContent='';
+  openS('sh-reset');
+}
+async function confirmResetOrders(){
+  var pin=document.getElementById('reset-pin').value.trim();
+  if(pin!==correctPin){
+    document.getElementById('reset-err').textContent='PIN incorrecto. Intentalo de nuevo.';
+    document.getElementById('reset-pin').value='';
+    if(navigator.vibrate)navigator.vibrate([100,50,100]);
+    return;
+  }
+  // Borrar pedidos, conservar menu
+  aOrds=[];cOrds=[];nextOId=1;
+  try{
+    await saveCloud();
+    saveLocal();clearPS();
+    closeS('sh-reset');
+    toast('Todos los pedidos fueron eliminados');
+    renderA();renderMet();renderH();renderR();renderK();
+  }catch(e){
+    // Si no hay internet, borrar localmente igual
+    saveLocal();
+    closeS('sh-reset');
+    toast('Pedidos eliminados localmente','warn');
+    renderA();renderMet();renderH();renderR();renderK();
+  }
+}
 
 // ── ESTADO GLOBAL ─────────────────────────────────────────────────────────────
 var menu=[],aOrds=[],cOrds=[];
@@ -712,7 +767,7 @@ async function pollForUpdates(){
     lastKnownData=sig;
   }catch(e){}
 }
-function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(pollForUpdates,5000)}
+function startPolling(){clearInterval(pollTimer);pollTimer=setInterval(pollForUpdates,3000)}
 
 function updateOnlineStatus(){
   isOnline=navigator.onLine;
