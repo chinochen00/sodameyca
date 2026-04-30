@@ -38,7 +38,7 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-sys
 .hdr-sub{font-size:12px;color:var(--t2);margin-top:2px}
 .hdr-time{font-size:13px;color:var(--t2);margin-top:1px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px}
-.mc{background:var(--bg2);border-radius:14px;padding:14px 12px;border:1px solid var(--b2)}
+.mc{background:var(--bg2);border-radius:14px;padding:14px 12px;border:1px solid var(--b2)}e
 .mc.span2{grid-column:1/-1}
 .ml{font-size:10px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
 .mv{font-size:20px;font-weight:700;color:var(--t)}
@@ -205,13 +205,21 @@ select.finp option{background:var(--bg3)}
   <div class="sbar"><input type="text" id="ms" placeholder="Buscar platillo..." oninput="renderM()"></div>
   <div class="seg">
     <button class="sg on" onclick="setMCat('',this)">Todos</button>
-    <button class="sg" onclick="setMCat('Entradas',this)">Entradas</button>
+    <button class="sg" onclick="setMCat('Chop Suey',this)">Chop Suey</button>
+    <button class="sg" onclick="setMCat('Arroz Frito',this)">Arroz Frito</button>
     <button class="sg" onclick="setMCat('Sopas',this)">Sopas</button>
-    <button class="sg" onclick="setMCat('Arroz y fideos',this)">Arroz</button>
+    <button class="sg" onclick="setMCat('Wantan',this)">Wantan</button>
     <button class="sg" onclick="setMCat('Carnes',this)">Carnes</button>
-    <button class="sg" onclick="setMCat('Mariscos',this)">Mariscos</button>
-    <button class="sg" onclick="setMCat('Postres',this)">Postres</button>
+    <button class="sg" onclick="setMCat('Vegetales',this)">Vegetales</button>
+    <button class="sg" onclick="setMCat('Casados Chinos',this)">Casados chinos</button>
+    <button class="sg" onclick="setMCat('Tacos chinos',this)">Tacos chinos</button>
+    <button class="sg" onclick="setMCat('Alitas Fritas',this)">Alistas fritas</button>
+    <button class="sg" onclick="setMCat('Comidas rápidas',this)">Comidas rápidas</button>
+    <button class="sg" onclick="setMCat('Ensaladas',this)">Ensaladas</button>
     <button class="sg" onclick="setMCat('Bebidas',this)">Bebidas</button>
+
+
+
   </div>
   <div id="mlist"></div>
 </div>
