@@ -394,8 +394,8 @@ select.finp option{background:var(--bg3)}
       <div class="frow">
         <label>Tipo de orden</label>
         <div class="type-btns">
-          <button class="type-btn on-mesa" id="type-mesa" onclick="selType('Mesa')">&#x1F4BA; Mesa</button>
-          <button class="type-btn" id="type-llevar" onclick="selType('Para Llevar')">&#x1F6CD; Para Llevar</button>
+          <button class="type-btn" id="type-mesa" onclick="selType('Mesa')">&#x1F4BA; Mesa</button>
+          <button class="type-btn on-llevar" id="type-llevar" onclick="selType('Para Llevar')">&#x1F6CD; Para Llevar</button>
         </div>
       </div>
       <div id="vlist">
@@ -663,7 +663,7 @@ function forcSync(){if(isOnline){pendingSync=true;syncToCloud()}else{toast('Sin 
 // ── ESTADO GLOBAL ─────────────────────────────────────────────────────────────
 var menu=[],aOrds=[],cOrds=[];
 var nextOId=1,nextMId=13;
-var editSz=[],editMId=null,curItems=[],repM='d',payM='Efectivo',payOId=null,editOId=null,mCat='',kFilter='all',orderType='Mesa';
+var editSz=[],editMId=null,curItems=[],repM='d',payM='Efectivo',payOId=null,editOId=null,mCat='',kFilter='all',orderType='Para Llevar';
 var saveTimer=null,pendingDeleteId=null,deleteType='orden';
 var isOnline=navigator.onLine,pendingSync=false,pollTimer=null,lastKnownData='';
 var LS_KEY='sodameyca_v4';
@@ -759,7 +759,7 @@ async function initApp(){
       }
     }
   }
-  aOrds.forEach(function(o){if(!o.kitchenStatus)o.kitchenStatus='Nuevo';if(!o.orderType)o.orderType='Mesa'});
+  aOrds.forEach(function(o){if(!o.kitchenStatus)o.kitchenStatus='Nuevo';if(!o.orderType)o.orderType='Para Llevar'});
   if(!menu.length){menu=DM;nextMId=13;if(isOnline){try{await saveCloud()}catch(e){}}saveLocal()}
   document.getElementById('ls').style.display='none';
   document.getElementById('wrap').style.display='flex';
@@ -791,7 +791,7 @@ function openOM(oid){
   document.getElementById('sh-om-t').textContent=ex?'Editar '+ex.code:'Nueva orden';
   document.getElementById('om-btn').textContent=ex?'Guardar cambios':'Guardar orden';
   document.getElementById('ocl').value=ex?ex.client:'';
-  orderType=ex?ex.orderType||'Mesa':'Mesa';
+  orderType=ex?ex.orderType||'Para Llevar':'Para Llevar';
   selType(orderType);
   document.getElementById('osrch').value='';
   curItems=ex?ex.items.map(function(i){return Object.assign({},i)}):[];
@@ -873,7 +873,6 @@ function setKFilter(f,btn){kFilter=f;document.querySelectorAll('#k-seg .sg').for
 function setKStatus(oid,st){
   var o=aOrds.find(function(x){return x.id===oid});if(!o)return;
   o.kitchenStatus=st;
-  // Si se marca Completado, simplemente se guarda — NO se mueve a cOrds
   sched();renderA();renderK();
 }
 function renderK(){
@@ -884,31 +883,66 @@ function renderK(){
   var badge=document.getElementById('badge-k'),urg=newC+progC;
   if(urg>0){badge.textContent=urg;badge.classList.add('show')}else badge.classList.remove('show');
 
-  // En Cocina solo mostrar Nuevo y En Progreso (Completado desaparece)
+  // Solo mostrar Nuevo y En Progreso en Cocina
   var visible=aOrds.filter(function(o){return o.kitchenStatus!=='Completado'});
   var f=kFilter==='all'?visible:visible.filter(function(o){return o.kitchenStatus===kFilter});
 
-  if(!f.length){document.getElementById('klist').innerHTML='<div class="empty" style="padding:60px 20px">&#x2705; Todo listo — sin ordenes pendientes</div>';return}
+  // Resumen de platos (solo de ordenes visibles en el filtro actual o todas las activas no completadas)
+  var platosSource=kFilter==='all'?visible:visible;
+  var platoCount={};
+  platosSource.forEach(function(o){
+    o.items.forEach(function(i){
+      var key=i.name+(i.sizeLabel?' ('+i.sizeLabel+')':'');
+      platoCount[key]=(platoCount[key]||0)+i.qty;
+    });
+  });
+  var platoEntries=Object.entries(platoCount).filter(function(e){return e[1]>1}).sort(function(a,b){return b[1]-a[1]});
 
-  document.getElementById('klist').innerHTML=f.map(function(o){
-    var ks=o.kitchenStatus||'Nuevo';
-    var kclass=ks==='En Progreso'?'k-prog':'k-new';
-    var btns='';
-    if(ks==='Nuevo')btns='<button class="kc-btn kc-prog" onclick="setKStatus('+o.id+',\'En Progreso\')">&#x1F7E1; Poner En Progreso</button>';
-    if(ks==='En Progreso')btns='<button class="kc-btn kc-done" onclick="setKStatus('+o.id+',\'Completado\')">&#x2705; Completado</button><button class="kc-btn kc-reset" onclick="setKStatus('+o.id+',\'Nuevo\')">Regresar</button>';
-    return '<div class="kcard '+kclass+'">'+
-      '<div class="kc-top">'+
-        '<span class="kc-code">'+o.code+'</span>'+
-        '<div style="display:flex;align-items:center;gap:8px">'+statusBadge(ks)+'<span class="kc-time">'+o.date.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
-      '</div>'+
-      '<div class="kc-client">'+(o.client||'Sin nombre')+'</div>'+
-      typeKBadge(o.orderType||'Mesa')+
-      '<div class="kc-items">'+o.items.map(function(i){
-        return '<div class="kc-item-row"><span class="kc-qty">'+i.qty+'</span><div><span class="kc-name">'+i.name+'</span>'+(i.sizeLabel?'<span class="kc-sz">'+i.sizeLabel+'</span>':'')+'</div></div>';
-      }).join('')+'</div>'+
-      '<div class="kc-btns">'+btns+'</div>'+
+  var resumenHTML='';
+  if(platoEntries.length>0){
+    resumenHTML='<div style="margin:0 16px 14px;background:#0d1a0d;border:1px solid #2d5a2d;border-radius:14px;padding:14px">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--gt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">&#x1F4CA; Platos repetidos — hacer juntos</div>'+
+      platoEntries.map(function(e){
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1a3a1a">'+
+          '<span style="font-size:15px;font-weight:600;color:var(--t)">'+e[0]+'</span>'+
+          '<span style="font-size:22px;font-weight:900;color:var(--yelt);background:#1a1200;border:1px solid #6b4800;border-radius:10px;padding:2px 14px">x'+e[1]+'</span>'+
+        '</div>';
+      }).join('')+
     '</div>';
-  }).join('');
+  }
+
+  var listaHTML='';
+  if(!f.length){
+    listaHTML='<div class="empty" style="padding:60px 20px">&#x2705; Todo listo — sin ordenes pendientes</div>';
+  }else{
+    listaHTML=f.map(function(o){
+      var ks=o.kitchenStatus||'Nuevo';
+      var kclass=ks==='En Progreso'?'k-prog':'k-new';
+      // Botones: Nuevo=gris->En Progreso, En Progreso=amarillo->Completado + regresar
+      var btns='';
+      if(ks==='Nuevo'){
+        btns='<button class="kc-btn kc-reset" onclick="setKStatus('+o.id+',\'En Progreso\')" style="flex:1;background:#2a2a2a;color:#ccc;border:1px solid #444">&#x25B6; Iniciar</button>';
+      }
+      if(ks==='En Progreso'){
+        btns='<button class="kc-btn kc-done" onclick="setKStatus('+o.id+',\'Completado\')">&#x2705; Completado</button>'+
+             '<button class="kc-btn kc-reset" onclick="setKStatus('+o.id+',\'Nuevo\')">&#x21A9; Regresar</button>';
+      }
+      return '<div class="kcard '+kclass+'">'+
+        '<div class="kc-top">'+
+          '<span class="kc-code">'+o.code+'</span>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+statusBadge(ks)+'<span class="kc-time">'+o.date.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'})+'</span></div>'+
+        '</div>'+
+        '<div class="kc-client">'+(o.client||'Sin nombre')+'</div>'+
+        typeKBadge(o.orderType||'Para Llevar')+
+        '<div class="kc-items">'+o.items.map(function(i){
+          return '<div class="kc-item-row"><span class="kc-qty">'+i.qty+'</span><div><span class="kc-name">'+i.name+'</span>'+(i.sizeLabel?'<span class="kc-sz">'+i.sizeLabel+'</span>':'')+'</div></div>';
+        }).join('')+'</div>'+
+        '<div class="kc-btns">'+btns+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  document.getElementById('klist').innerHTML=resumenHTML+listaHTML;
 }
 
 // ── ORDENES ACTIVAS ───────────────────────────────────────────────────────────
