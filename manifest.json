@@ -2,11 +2,13 @@
   "name": "Soda Mey Ca",
   "short_name": "Mey Ca",
   "description": "Sistema de ordenes para Soda Mey Ca",
-  "start_url": "/",
+  "start_url": "/sodameyca/",
+  "scope": "/sodameyca/",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#0a0a0a",
   "orientation": "portrait",
+  "lang": "es",
   "icons": [
     {
       "src": "icon-192.png",
