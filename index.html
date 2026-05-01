@@ -64,6 +64,7 @@ html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-sys
 .oc-type{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;margin-bottom:8px}
 .oc-type-mesa{background:#1a1a2d;color:#93c5fd;border:1px solid #1d3a6a}
 .oc-type-llevar{background:#1a2d1a;color:var(--gt);border:1px solid #2d5a2d}
+.oc-type-express{background:#2d1a00;color:#fbbf24;border:1px solid #92400e}
 /* Items lista clara */
 .oc-items-list{margin-bottom:10px}
 .oc-item-line{display:flex;align-items:baseline;gap:8px;padding:3px 0;border-bottom:1px solid var(--b)}
@@ -161,6 +162,7 @@ select.finp option{background:var(--bg3)}
 .type-btn{flex:1;padding:14px;border-radius:12px;border:1px solid var(--b2);background:var(--bg3);color:var(--t2);font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center}
 .type-btn.on-mesa{background:var(--blubg);color:var(--blut);border-color:#1d3a6a}
 .type-btn.on-llevar{background:var(--gbg);color:var(--gt);border-color:#2d5a2d}
+.type-btn.on-express{background:#2d1a00;color:#fbbf24;border-color:#92400e}
 .type-btn:active{transform:scale(.97)}
 .irow{display:flex;align-items:center;padding:13px 0;border-bottom:1px solid var(--b)}
 .irow:last-child{border-bottom:none}
@@ -408,6 +410,7 @@ select.finp option{background:var(--bg3)}
         <div class="type-btns">
           <button class="type-btn" id="type-mesa" onclick="selType('Mesa')">&#x1F4BA; Mesa</button>
           <button class="type-btn on-llevar" id="type-llevar" onclick="selType('Para Llevar')">&#x1F6CD; Para Llevar</button>
+          <button class="type-btn" id="type-express" onclick="selType('Express')">&#x26A1; Express</button>
         </div>
       </div>
       <div id="vlist">
@@ -633,10 +636,12 @@ function statusBadge(s){
 }
 function typeBadge(t){
   if(t==='Para Llevar')return'<span class="oc-type oc-type-llevar">&#x1F6CD; Para Llevar</span>';
+  if(t==='Express')return'<span class="oc-type oc-type-express">&#x26A1; Express</span>';
   return'<span class="oc-type oc-type-mesa">&#x1F4BA; Mesa</span>';
 }
 function typeKBadge(t){
   if(t==='Para Llevar')return'<span class="kc-type oc-type-llevar">&#x1F6CD; Para Llevar</span>';
+  if(t==='Express')return'<span class="kc-type oc-type-express">&#x26A1; Express</span>';
   return'<span class="kc-type oc-type-mesa">&#x1F4BA; Mesa</span>';
 }
 
@@ -858,6 +863,7 @@ function selType(t){
   orderType=t;
   document.getElementById('type-mesa').className='type-btn'+(t==='Mesa'?' on-mesa':'');
   document.getElementById('type-llevar').className='type-btn'+(t==='Para Llevar'?' on-llevar':'');
+  document.getElementById('type-express').className='type-btn'+(t==='Express'?' on-express':'');
 }
 
 // ── NUEVA / EDITAR ORDEN ──────────────────────────────────────────────────────
