@@ -639,7 +639,8 @@ function typeKBadge(t){
 // ── RELOJ ─────────────────────────────────────────────────────────────────────
 setInterval(function(){document.getElementById('htime').textContent=new Date().toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
 document.getElementById('htime').textContent=new Date().toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-var now=new Date(),todayStr=now.toISOString().slice(0,10);
+var now=new Date();
+var todayStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
 document.getElementById('hdate').textContent=now.toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
 // ── LOGIN ─────────────────────────────────────────────────────────────────────
@@ -1245,7 +1246,7 @@ function exportCSV(){
 function setRep(m,btn){repM=m;document.querySelectorAll('#rep-seg .sg').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');renderR()}
 function renderR(){
   var n=new Date(),g={},labels=[],title='';
-  if(repM==='d'){title='Ultimos 14 dias';for(var i=13;i>=0;i--){var d=new Date(n);d.setDate(d.getDate()-i);var k=d.toISOString().slice(0,10);labels.push(k.slice(5));g[k]=0}cOrds.forEach(function(o){if(g[o.dateStr]!==undefined)g[o.dateStr]+=o.total})}
+  if(repM==='d'){title='Ultimos 14 dias';for(var i=13;i>=0;i--){var d=new Date(n);d.setDate(d.getDate()-i);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');labels.push(k.slice(5));g[k]=0}cOrds.forEach(function(o){if(g[o.dateStr]!==undefined)g[o.dateStr]+=o.total})}
   else if(repM==='m'){title='Ano actual';var mo=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];for(var m=0;m<12;m++){var k=n.getFullYear()+'-'+(m+1<10?'0':'')+(m+1);labels.push(mo[m]);g[k]=0}cOrds.forEach(function(o){var k=o.dateStr.slice(0,7);if(g[k]!==undefined)g[k]+=o.total})}
   else{title='Por ano';var yr=n.getFullYear();for(var y=yr-3;y<=yr;y++){labels.push(String(y));g[y]=0}cOrds.forEach(function(o){var y=+o.dateStr.slice(0,4);if(g[y]!==undefined)g[y]+=o.total})}
   var vals=Object.values(g),total=vals.reduce(function(a,b){return a+b},0),cnt=cOrds.length,avg=cnt?total/cnt:0;
