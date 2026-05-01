@@ -408,7 +408,7 @@ select.finp option{background:var(--bg3)}
       </div>
       <div id="vlist">
         <div class="frow" style="margin-bottom:10px"><label>Agregar platillos</label><input class="finp" type="text" id="osrch" placeholder="Buscar..." oninput="filterOL()"></div>
-        <div style="max-height:200px;overflow-y:auto;border:1px solid var(--b2);border-radius:14px;margin-bottom:14px;background:var(--bg3);padding:0 14px"><div id="olist"></div></div>
+        <div id="olist-wrap" style="max-height:200px;overflow-y:auto;border:1px solid var(--b2);border-radius:14px;margin-bottom:14px;background:var(--bg3);padding:0 14px"><div id="olist"></div></div>
       </div>
       <div id="vsz" style="display:none">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -868,7 +868,14 @@ function openOM(oid){
   var extraField=document.getElementById('extra-amount');
   if(extraField)extraField.value=ex&&ex.extraAmount?ex.extraAmount:'';
   curItems=ex?ex.items.map(function(i){return Object.assign({},i)}):[];
-  backL();renderOL();renderCI();openS('sh-om');
+  backL();renderOL();renderCI();
+  openS('sh-om');
+  // Forzar scroll al tope despues de que el DOM se actualice
+  requestAnimationFrame(function(){
+    var w=document.getElementById('olist-wrap');if(w)w.scrollTop=0;
+    var s=document.getElementById('sh-om');if(s)s.scrollTop=0;
+    var sheet=document.querySelector('#sh-om .sheet');if(sheet)sheet.scrollTop=0;
+  });
 }
 function showSzPicker(mid){
   var p=menu.find(function(x){return x.id===mid});
