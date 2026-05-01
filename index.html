@@ -239,6 +239,77 @@ select.finp option{background:var(--bg3)}
 #toast.err{background:var(--rbg);border-color:var(--red);color:var(--rt)}
 #toast.warn{background:var(--yelbg);border-color:var(--yel);color:var(--yelt)}
 @media print{body *{visibility:hidden}#rprint,#rprint *{visibility:visible}#rprint{position:fixed;left:0;top:0;width:100%;background:#fff;color:#000;padding:20px;font-size:12px;font-family:monospace}}
+
+/* ── LANDSCAPE MÓVIL ─────────────────────────────────────────── */
+@media (orientation:landscape) and (max-width:900px){
+  html,body{overflow:hidden;position:fixed;width:100%}
+  #wrap{flex-direction:row;height:100vh;height:100dvh}
+  #nav{position:static;flex-direction:column;width:70px;height:100%;border-top:none;border-right:1px solid var(--b2);padding-bottom:0;overflow:hidden}
+  .nb{padding:12px 4px;flex-direction:column;gap:3px}
+  .nl{font-size:8px}
+  .ni{font-size:19px}
+  #screen{padding-bottom:0;padding-left:0;flex:1;overflow-y:auto}
+  #status-bar{position:relative;top:auto}
+  /* Cocina en landscape: 2 columnas */
+  #klist{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;padding:0 12px 12px}
+  .kcard{margin:0}
+}
+
+/* ── TABLET / DESKTOP ────────────────────────────────────────── */
+@media (min-width:900px){
+  html,body{overflow:hidden;position:static}
+  #wrap{flex-direction:row;height:100vh;max-width:1400px;margin:0 auto;border-left:1px solid var(--b2);border-right:1px solid var(--b2)}
+  /* Nav lateral izquierdo */
+  #nav{position:static;flex-direction:column;width:100px;height:100%;border-top:none;border-right:1px solid var(--b2);padding-bottom:0;justify-content:flex-start;overflow:hidden}
+  .nb{padding:18px 4px;flex-direction:column;gap:5px;border-left:3px solid transparent}
+  .nb.on{border-left-color:var(--red)}
+  .ni{font-size:22px}
+  .nl{font-size:10px}
+  .nb-badge{right:calc(50% - 22px)}
+  #screen{padding-bottom:0;flex:1;overflow-y:auto}
+  #status-bar{position:sticky}
+  /* Header horizontal en desktop */
+  .hdr{display:flex;align-items:center;gap:20px;text-align:left;padding:20px 24px;border-bottom:1px solid var(--b)}
+  .hdr img{margin:0;flex-shrink:0}
+  .hdr-name{font-size:22px}
+  /* Grids mas amplios */
+  .grid2{grid-template-columns:repeat(4,1fr);padding:16px 24px}
+  .grid2 .mc.span2{grid-column:auto}
+  /* Padding lateral mayor */
+  .pg{max-width:1300px}
+  .stitle{padding:20px 24px 10px}
+  .sbar{margin:0 24px 12px}
+  .seg{margin:0 24px 12px}
+  .fab{margin:0 24px 16px;width:calc(100% - 48px)}
+  .exp-btn{margin:0 24px 20px}
+  /* COCINA: grid de columnas */
+  #klist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:0 24px 24px;align-items:start}
+  .kcard{margin:0}
+  /* Menu en 2 columnas */
+  #mlist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 24px}
+  .mcard{margin:0}
+  /* Ordenes activas en 2 columnas */
+  #alist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 24px}
+  .ocard{margin:0}
+  /* Historial */
+  #hlist{padding:0 24px}
+  .h-search-bar{padding:0 24px 10px}
+  .h-date-group{margin:0 0 12px}
+  /* Resumen platos en cocina */
+  #k-summary-wrap{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:0 24px 14px}
+}
+
+@media (min-width:900px){
+  #k-header{padding:20px 24px 10px!important}
+  #k-seg{margin:0 24px 12px}
+}
+@media (min-width:1200px){
+  #nav{width:120px}
+  .nl{font-size:11px}
+  .ni{font-size:24px}
+  #klist{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+  .grid2{grid-template-columns:repeat(5,1fr)}
+}
 </style>
 </head>
 <body>
@@ -315,7 +386,7 @@ select.finp option{background:var(--bg3)}
 
 <!-- COCINA -->
 <div class="pg" id="pg-k">
-  <div style="padding:18px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <div style="padding:18px 16px 10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px" id="k-header">
     <div style="font-size:20px;font-weight:700;color:var(--t)">&#x1F373; Cocina</div>
     <div style="display:flex;gap:6px">
       <span class="status-badge sb-new" id="k-cnt-new">0 Nuevos</span>
@@ -1022,7 +1093,7 @@ function renderK(){
 
   var resumenHTML='';
   if(platoEntries.length>0){
-    resumenHTML='<div style="margin:0 16px 14px;background:#0d1a0d;border:1px solid #2d5a2d;border-radius:14px;padding:14px">'+
+    resumenHTML='<div id="k-summary-wrap" style="margin:0 16px 14px"><div style="background:#0d1a0d;border:1px solid #2d5a2d;border-radius:14px;padding:14px;grid-column:1/-1">'+
       '<div style="font-size:12px;font-weight:700;color:var(--gt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">&#x1F4CA; Platos repetidos — hacer juntos</div>'+
       platoEntries.map(function(e){
         var nombre=e[0],total=e[1];
@@ -1047,7 +1118,7 @@ function renderK(){
           desglose+
         '</div>';
       }).join('')+
-    '</div>';
+    '</div></div>';
   }
 
   var listaHTML='';
