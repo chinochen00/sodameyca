@@ -419,6 +419,14 @@ select.finp option{background:var(--bg3)}
       </div>
       <div style="font-size:13px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Orden actual</div>
       <div style="border:1px solid var(--b2);border-radius:14px;background:var(--bg3);padding:0 14px;min-height:56px;margin-bottom:12px"><div id="ocur"><div class="empty" style="padding:20px">Sin platillos</div></div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;background:var(--bg3);border:1px solid var(--b2);border-radius:14px;padding:12px 14px">
+        <span style="font-size:13px;color:var(--t2);font-weight:600;white-space:nowrap">&#x2795; Cargo extra</span>
+        <div style="display:flex;align-items:center;gap:6px;flex:1">
+          <span style="font-size:15px;color:var(--t2);font-weight:600">&#x20A1;</span>
+          <input type="number" id="extra-amount" min="0" step="100" placeholder="0" oninput="renderCI()"
+            style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--b2);color:var(--t);font-size:16px;font-weight:700;padding:4px 0;font-family:inherit;text-align:right;outline:none">
+        </div>
+      </div>
       <div class="tot-bar"><span class="tot-lbl">Total</span><span class="tot-val" id="otot">&#x20A1;0</span></div>
       <button class="pbtn" id="om-btn" onclick="saveO()">Guardar orden</button>
       <button class="sbtn" onclick="closeS('sh-om')">Cancelar</button>
@@ -484,6 +492,7 @@ select.finp option{background:var(--bg3)}
         </div>
         <div style="border-top:1px dashed var(--b2);padding-top:12px">
           <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--t2)">Subtotal</span><span id="rsub"></span></div>
+          <div id="rextra-row" style="display:none;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--yelt)">&#x2795; Cargo extra</span><span id="rextra" style="color:var(--yelt)"></span></div>
           <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:700"><span style="color:var(--t)">Total</span><span id="rtot2" style="color:var(--grn)"></span></div>
         </div>
         <div style="text-align:center;margin-top:18px;font-size:12px;color:var(--t2)">Gracias por su visita!</div>
@@ -856,6 +865,8 @@ function openOM(oid){
   orderType=ex?ex.orderType||'Para Llevar':'Para Llevar';
   selType(orderType);
   document.getElementById('osrch').value='';
+  var extraField=document.getElementById('extra-amount');
+  if(extraField)extraField.value=ex&&ex.extraAmount?ex.extraAmount:'';
   curItems=ex?ex.items.map(function(i){return Object.assign({},i)}):[];
   backL();renderOL();renderCI();openS('sh-om');
 }
@@ -874,34 +885,59 @@ function renderOL(){
     var multi=p.sizes.length>1||(p.sizes[0]&&p.sizes[0].label);
     var pl=multi?p.sizes.map(function(s){return (s.label||'Unico')+' '+fmt(s.price)}).join(' / '):fmt(p.sizes[0]?p.sizes[0].price:0);
     var act=multi?'showSzPicker('+p.id+')':'addItem('+p.id+',0)';
-    return '<div class="irow"><div class="irow-info"><div class="irow-name">'+p.name+'</div><div class="irow-desc">'+(p.desc||'')+'</div><div class="irow-price">'+pl+'</div></div><button class="add-btn" onclick="'+act+'">+ Add</button></div>';
+    return '<div class="irow"><div class="irow-info"><div style="display:flex;align-items:center;gap:7px;margin-bottom:2px"><span style="font-family:monospace;font-size:11px;color:var(--t2);background:var(--bg3);border:1px solid var(--b2);border-radius:6px;padding:1px 7px;flex-shrink:0">'+p.code+'</span><span class="irow-name">'+p.name+'</span></div><div class="irow-desc">'+(p.desc||'')+'</div><div class="irow-price">'+pl+'</div></div><button class="add-btn" onclick="'+act+'">+ Add</button></div>';
   }).join('');
 }
 function addItem(mid,si){
   var p=menu.find(function(x){return x.id===mid});var s=p.sizes[si]||p.sizes[0];
   var lk=mid+'_'+(s.label||'0');
   var ex=curItems.find(function(i){return i.lineKey===lk});
-  if(ex)ex.qty++;else curItems.push({menuId:mid,lineKey:lk,name:p.name,desc:p.desc||'',code:p.code,sizeLabel:s.label||'',price:s.price,qty:1});
+  if(ex)ex.qty++;else curItems.push({menuId:mid,lineKey:lk,name:p.name,desc:p.desc||'',code:p.code,sizeLabel:s.label||'',price:s.price,qty:1,notas:''});
   renderCI();
 }
 function chQty(lk,d){var i=curItems.findIndex(function(x){return x.lineKey===lk});if(i<0)return;curItems[i].qty+=d;if(curItems[i].qty<=0)curItems.splice(i,1);renderCI()}
+function setNota(lk,val){var i=curItems.findIndex(function(x){return x.lineKey===lk});if(i>=0)curItems[i].notas=val}
 function renderCI(){
   var tot=curItems.reduce(function(a,i){return a+i.price*i.qty},0);
   document.getElementById('ocur').innerHTML=curItems.length?curItems.map(function(i){
-    return '<div class="currow"><div class="cur-info"><div class="cur-name">'+i.name+(i.sizeLabel?'<span class="stag">'+i.sizeLabel+'</span>':'')+'</div><div class="cur-price">'+fmt(i.price)+' c/u</div></div><div class="qty-row"><button class="qb" onclick="chQty(\''+i.lineKey+'\',-1)">&minus;</button><span class="qnum">'+i.qty+'</span><button class="qb" onclick="chQty(\''+i.lineKey+'\',1)">+</button><span style="font-size:14px;font-weight:700;color:var(--grn);min-width:58px;text-align:right">'+fmt(i.price*i.qty)+'</span></div></div>';
+    var lk=i.lineKey.replace(/'/g,"\\'");
+    return '<div class="currow" style="flex-direction:column;align-items:stretch;gap:8px">'+
+      '<div style="display:flex;align-items:center;gap:10px">'+
+        '<div class="cur-info" style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:7px;margin-bottom:2px">'+
+            '<span style="font-family:monospace;font-size:11px;color:var(--t2);background:var(--bg4);border:1px solid var(--b2);border-radius:6px;padding:1px 7px;flex-shrink:0">'+i.code+'</span>'+
+            '<span class="cur-name">'+i.name+(i.sizeLabel?'<span class="stag">'+i.sizeLabel+'</span>':'')+'</span>'+
+          '</div>'+
+          '<div class="cur-price">'+fmt(i.price)+' c/u</div>'+
+        '</div>'+
+        '<div class="qty-row">'+
+          '<button class="qb" onclick="chQty(\''+lk+'\',-1)">&minus;</button>'+
+          '<span class="qnum">'+i.qty+'</span>'+
+          '<button class="qb" onclick="chQty(\''+lk+'\',1)">+</button>'+
+          '<span style="font-size:14px;font-weight:700;color:var(--grn);min-width:58px;text-align:right">'+fmt(i.price*i.qty)+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<input type="text" value="'+(i.notas||'')+'" placeholder="&#x1F4DD; Notas (ej: sin cebolla, extra picante...)" '+
+        'oninput="setNota(\''+lk+'\',this.value)" '+
+        'style="width:100%;background:var(--bg4);border:1px solid var(--b2);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--t);font-family:inherit">'+
+    '</div>';
   }).join(''):'<div class="empty" style="padding:20px">Sin platillos aun</div>';
-  document.getElementById('otot').textContent=fmt(tot);
+  var tot=curItems.reduce(function(a,i){return a+i.price*i.qty},0);
+  var extra=parseFloat(document.getElementById('extra-amount')?document.getElementById('extra-amount').value:0)||0;
+  document.getElementById('otot').textContent=fmt(tot+extra);
 }
 function saveO(){
   if(!curItems.length){alert('Agrega al menos un platillo.');return}
   var client=document.getElementById('ocl').value.trim();
-  var tot=curItems.reduce(function(a,i){return a+i.price*i.qty},0);
+  var extra=parseFloat(document.getElementById('extra-amount').value)||0;
+  var tot=curItems.reduce(function(a,i){return a+i.price*i.qty},0)+extra;
   if(editOId!==null){
     var idx=aOrds.findIndex(function(x){return x.id===editOId});
-    if(idx>=0){aOrds[idx].client=client;aOrds[idx].items=curItems.map(function(i){return Object.assign({},i)});aOrds[idx].total=tot;aOrds[idx].orderType=orderType}
+    if(idx>=0){aOrds[idx].client=client;aOrds[idx].items=curItems.map(function(i){return Object.assign({},i)});aOrds[idx].total=tot;aOrds[idx].extraAmount=extra;aOrds[idx].orderType=orderType}
   }else{
-    aOrds.unshift({id:nextOId++,code:genCode(),client:client,orderType:orderType,items:curItems.map(function(i){return Object.assign({},i)}),total:tot,date:new Date(),dateStr:todayStr,status:'activa',kitchenStatus:'Nuevo',payMethod:'',montoRecibido:0,vuelto:0});
+    aOrds.unshift({id:nextOId++,code:genCode(),client:client,orderType:orderType,items:curItems.map(function(i){return Object.assign({},i)}),total:tot,extraAmount:extra,date:new Date(),dateStr:todayStr,status:'activa',kitchenStatus:'Nuevo',payMethod:'',montoRecibido:0,vuelto:0});
   }
+  document.getElementById('extra-amount').value='';
   sched();closeS('sh-om');renderA();renderMet();renderK();
 }
 
@@ -1020,7 +1056,7 @@ function renderK(){
         '<div class="kc-client">'+(o.client||'Sin nombre')+'</div>'+
         typeKBadge(o.orderType||'Para Llevar')+
         '<div class="kc-items">'+o.items.map(function(i){
-          return '<div class="kc-item-row"><span class="kc-qty">'+i.qty+'</span><div><span class="kc-name">'+i.name+'</span>'+(i.sizeLabel?'<span class="kc-sz">'+i.sizeLabel+'</span>':'')+'</div></div>';
+          return '<div class="kc-item-row"><span class="kc-qty">'+i.qty+'</span><div><span class="kc-name">'+i.name+'</span>'+(i.sizeLabel?'<span class="kc-sz">'+i.sizeLabel+'</span>':'')+(i.notas?'<span style="display:block;font-size:12px;color:var(--yelt);margin-top:3px">&#x1F4DD; '+i.notas+'</span>':'')+'</div></div>';
         }).join('')+'</div>'+
         '<div class="kc-btns">'+btns+'</div>'+
       '</div>';
@@ -1052,7 +1088,7 @@ function renderA(){
           return '<div class="oc-item-line">'+
             '<span class="oc-item-qty">'+i.qty+'x</span>'+
             '<span class="oc-item-name">'+i.name+(i.sizeLabel?'<span class="oc-item-sz"> ('+i.sizeLabel+')</span>':'')+'</span>'+
-          '</div>';
+          '</div>'+(i.notas?'<div style="font-size:12px;color:var(--yelt);padding:2px 0 4px 36px">&#x1F4DD; '+i.notas+'</div>':'');
         }).join('')+
       '</div>'+
       '<div class="oc-total">'+fmt(o.total)+'</div>'+
@@ -1135,12 +1171,16 @@ function showReceipt(oid){
   if(o.payMethod==='Efectivo'&&o.montoRecibido>0){mr.style.display='flex';document.getElementById('rmonto').textContent=fmt(o.montoRecibido);vr.style.display='flex';document.getElementById('rvuelto').textContent=fmt(o.vuelto||0)}
   else{mr.style.display='none';vr.style.display='none'}
   document.getElementById('ritems').innerHTML=o.items.map(function(i){
-    return '<tr><td style="padding:7px 0;color:var(--t);background:var(--mod)">'+i.name+(i.sizeLabel?' <span class="stag">'+i.sizeLabel+'</span>':'')+'</td>'+
+    return '<tr><td style="padding:7px 0;color:var(--t);background:var(--mod)">'+i.name+(i.sizeLabel?' <span class="stag">'+i.sizeLabel+'</span>':'')+(i.notas?'<br><span style="font-size:11px;color:var(--yelt)">&#x1F4DD; '+i.notas+'</span>':'')+'</td>'+
       '<td style="padding:7px 0;text-align:center;color:var(--t2);background:var(--mod)">'+i.qty+'</td>'+
       '<td style="padding:7px 0;text-align:right;color:var(--t2);background:var(--mod)">'+fmt(i.price)+'</td>'+
       '<td style="padding:7px 0;text-align:right;font-weight:700;color:var(--grn);background:var(--mod)">'+fmt(i.price*i.qty)+'</td></tr>';
   }).join('');
-  document.getElementById('rsub').textContent=fmt(o.total);
+  var subtotal=o.items.reduce(function(a,i){return a+i.price*i.qty},0);
+  document.getElementById('rsub').textContent=fmt(subtotal);
+  var exRow=document.getElementById('rextra-row');
+  if(o.extraAmount&&o.extraAmount>0){exRow.style.display='flex';document.getElementById('rextra').textContent=fmt(o.extraAmount)}
+  else{exRow.style.display='none'}
   document.getElementById('rtot2').textContent=fmt(o.total);
   openS('sh-rm');
 }
@@ -1153,7 +1193,7 @@ function renderM(){
   document.getElementById('mlist').innerHTML=f.length?f.map(function(m){
     var multi=m.sizes.length>1||(m.sizes[0]&&m.sizes[0].label);
     var pc=multi?m.sizes.map(function(s){return (s.label||'Unico')+' '+fmt(s.price)}).join(' \u00b7 '):fmt(m.sizes[0]?m.sizes[0].price:0);
-    return '<div class="mcard"><div class="mcard-info"><div class="mcard-cat">'+m.cat+'</div><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><span class="mcard-name">'+m.name+'</span><span style="font-family:monospace;font-size:11px;color:var(--t2);background:var(--bg3);border:1px solid var(--b2);border-radius:6px;padding:1px 7px">'+m.code+'</span></div><div class="mcard-desc">'+(m.desc||'')+'</div><div class="mcard-price">'+pc+'</div><div style="margin-top:6px"><span style="font-size:11px;padding:2px 8px;border-radius:99px;'+(m.avail?'background:var(--gbg);color:var(--gt)':'background:var(--rbg);color:var(--rt)')+'">'+  (m.avail?'Disponible':'No disponible')+'</span></div></div>'+
+    return '<div class="mcard"><div class="mcard-info"><div class="mcard-cat">'+m.cat+'</div><div style="display:flex;align-items:center;gap:8px;margin-bottom:2px"><span style="font-family:monospace;font-size:11px;color:var(--t2);background:var(--bg3);border:1px solid var(--b2);border-radius:6px;padding:1px 7px;flex-shrink:0">'+m.code+'</span><span class="mcard-name">'+m.name+'</span></div><div class="mcard-desc">'+(m.desc||'')+'</div><div class="mcard-price">'+pc+'</div><div style="margin-top:6px"><span style="font-size:11px;padding:2px 8px;border-radius:99px;'+(m.avail?'background:var(--gbg);color:var(--gt)':'background:var(--rbg);color:var(--rt)')+'">'+  (m.avail?'Disponible':'No disponible')+'</span></div></div>'+
       '<div class="mcard-actions"><button class="mcard-edit" onclick="openMM('+m.id+')">&#x270F; Editar</button><button class="mcard-del" onclick="askDelete('+m.id+',\'menu\',\'Eliminar '+m.name+'?\')">&#x1F5D1; Borrar</button></div></div>';
   }).join(''):'<div class="empty">No se encontraron platillos</div>';
 }
