@@ -303,7 +303,11 @@ select.finp option{background:var(--bg3)}
   <div class="stitle">Ordenes activas <span id="active-count" style="font-size:13px;color:var(--t2);font-weight:400"></span></div>
   <div id="alist"><div class="empty">No hay ordenes activas</div></div>
   <div class="stitle" style="margin-top:6px">Historial</div>
-  <div class="h-search-bar"><input type="text" id="h-search" placeholder="Buscar por orden, cliente o fecha..." oninput="renderH()"></div>
+  <div class="h-search-bar" style="display:flex;gap:8px">
+    <input type="text" id="h-search" placeholder="Buscar por orden, cliente..." oninput="renderH()" style="flex:1">
+    <input type="date" id="h-date-filter" onchange="renderH()" style="background:var(--bg3);border:1px solid var(--b2);border-radius:12px;padding:11px 12px;font-size:14px;color:var(--t);font-family:inherit;cursor:pointer;width:auto">
+    <button onclick="clearDateFilter()" id="h-date-clear" style="display:none;background:var(--rbg);border:1px solid #7f1d1d;border-radius:12px;padding:11px 12px;color:var(--rt);font-size:14px;cursor:pointer;white-space:nowrap">&#x2715;</button>
+  </div>
   <div id="hlist"></div>
 </div>
 
@@ -835,7 +839,7 @@ async function initApp(){
   if(!menu.length){menu=DM;nextMId=13;if(isOnline){try{await saveCloud()}catch(e){}}saveLocal()}
   document.getElementById('ls').style.display='none';
   document.getElementById('wrap').style.display='flex';
-  updateOnlineStatus();renderA();renderMet();renderH();renderR();renderM();renderK();startPolling();
+  updateOnlineStatus();renderA();renderMet();renderH();renderR();renderM();renderK();startPolling();scheduleMidnightReset();
   if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
 }
 
@@ -1108,13 +1112,37 @@ function renderA(){
     '</div>';
   }).join('');
 }
+function getLocalDateStr(d){
+  var dt=new Date(d);
+  return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+}
+function getTodayStr(){
+  var n=new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+}
 function renderMet(){
-  var all=[].concat(aOrds,cOrds).filter(function(o){return o.dateStr===todayStr});
-  var cob=cOrds.filter(function(o){return o.dateStr===todayStr});
+  var today=getTodayStr();
+  var all=[].concat(aOrds,cOrds).filter(function(o){return getLocalDateStr(o.date)===today});
+  var cob=cOrds.filter(function(o){return getLocalDateStr(o.date)===today});
   var tot=cob.reduce(function(a,o){return a+o.total},0);
   document.getElementById('mc1').textContent=all.length;
   document.getElementById('mc2').textContent=fmt(tot);
   document.getElementById('mc3').textContent=fmt(cob.length?tot/cob.length:0);
+}
+
+// Reset automatico a medianoche
+function scheduleMidnightReset(){
+  var n=new Date();
+  var msnext=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,5);
+  var ms=msnext-n;
+  setTimeout(function(){
+    // Actualizar todayStr al nuevo dia
+    var nd=new Date();
+    todayStr=nd.getFullYear()+'-'+String(nd.getMonth()+1).padStart(2,'0')+'-'+String(nd.getDate()).padStart(2,'0');
+    document.getElementById('hdate').textContent=nd.toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+    renderMet();renderH();
+    scheduleMidnightReset(); // programar para el siguiente dia
+  },ms);
 }
 
 // ── CONFIRMAR ─────────────────────────────────────────────────────────────────
@@ -1128,21 +1156,48 @@ function confirmDelete(){
 }
 
 // ── HISTORIAL ────────────────────────────────────────────────────────────────
+var expandedDays={};
+function toggleDay(ds){expandedDays[ds]=!expandedDays[ds];renderH()}
+function clearDateFilter(){
+  document.getElementById('h-date-filter').value='';
+  document.getElementById('h-date-clear').style.display='none';
+  renderH();
+}
+
 function renderH(){
   var q=(document.getElementById('h-search').value||'').toLowerCase().trim();
+  var dateFilter=document.getElementById('h-date-filter').value; // YYYY-MM-DD
   var el=document.getElementById('hlist');
+  var today=getTodayStr();
+
+  // Show/hide clear button
+  document.getElementById('h-date-clear').style.display=dateFilter?'block':'none';
+
   var f=cOrds.filter(function(o){
+    var ds=getLocalDateStr(o.date);
+    // Filter by selected date
+    if(dateFilter&&ds!==dateFilter)return false;
     if(!q)return true;
-    var ds=o.date.toLocaleDateString('es-CR',{year:'numeric',month:'long',day:'numeric'}).toLowerCase();
-    return o.code.toLowerCase().includes(q)||(o.client||'').toLowerCase().includes(q)||ds.includes(q)||o.dateStr.includes(q);
+    var dLabel=o.date.toLocaleDateString('es-CR',{year:'numeric',month:'long',day:'numeric'}).toLowerCase();
+    return o.code.toLowerCase().includes(q)||(o.client||'').toLowerCase().includes(q)||dLabel.includes(q)||ds.includes(q);
   });
-  if(!f.length){el.innerHTML='<div class="empty">Sin resultados</div>';return}
+  if(!f.length){el.innerHTML='<div class="empty">'+(dateFilter?'Sin ordenes para esta fecha':'Sin resultados')+'</div>';return}
+
   var g={},go=[];
-  f.forEach(function(o){if(!g[o.dateStr]){g[o.dateStr]=[];go.push(o.dateStr)}g[o.dateStr].push(o)});
+  f.forEach(function(o){
+    var ds=getLocalDateStr(o.date);
+    if(!g[ds]){g[ds]=[];go.push(ds)}
+    g[ds].push(o);
+  });
   go.sort(function(a,b){return b.localeCompare(a)});
+
   el.innerHTML=go.map(function(ds){
+    var isToday=ds===today;
     var label=new Date(ds+'T12:00:00').toLocaleDateString('es-CR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     var dt=g[ds].reduce(function(a,o){return a+o.total},0);
+    var cnt=g[ds].length;
+    var isOpen=isToday||(expandedDays[ds]===true)||(q.length>0)||(dateFilter.length>0);
+
     var rows=g[ds].map(function(o){
       return '<div class="hrow">'+
         '<div style="flex:1;min-width:0">'+
@@ -1162,8 +1217,32 @@ function renderH(){
         '</div>'+
       '</div>';
     }).join('');
-    return '<div class="h-date-group"><div class="h-date-label"><span>'+label+'</span><span style="color:var(--grn);font-weight:700">'+fmt(dt)+'</span></div>'+
-      '<div style="background:var(--bg2);border:1px solid var(--b2);border-radius:14px;overflow:hidden;padding:0 14px">'+rows+'</div></div>';
+
+    var headerStyle=isToday
+      ? 'background:var(--gbg);border:1px solid #2d5a2d;border-radius:14px 14px 0 0;padding:12px 14px;display:flex;justify-content:space-between;align-items:center'
+      : 'background:var(--bg3);border:1px solid var(--b2);border-radius:'+(isOpen?'14px 14px 0 0':'14px')+';padding:12px 14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer';
+    var headerClick=isToday?'':'onclick="toggleDay(\''+ds+'\')"';
+    var labelColor=isToday?'var(--gt)':'var(--t)';
+    var arrow=isToday?'':('<span style="color:var(--t2);font-size:16px;margin-left:8px">'+(isOpen?'&#x25B2;':'&#x25BC;')+'</span>');
+
+    var header='<div style="'+headerStyle+'" '+headerClick+'>'+
+      '<div>'+
+        '<div style="font-size:12px;font-weight:700;color:'+labelColor+';text-transform:uppercase;letter-spacing:.5px">'+
+          (isToday?'&#x1F7E2; HOY &mdash; ':'')+label+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--t2);margin-top:2px">'+cnt+' orden'+(cnt!==1?'es':'')+'</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<span style="font-size:16px;font-weight:700;color:var(--grn)">'+fmt(dt)+'</span>'+
+        arrow+
+      '</div>'+
+    '</div>';
+
+    var body=isOpen
+      ? '<div style="background:var(--bg2);border:1px solid var(--b2);border-top:none;border-radius:0 0 14px 14px;padding:0 14px">'+rows+'</div>'
+      : '';
+
+    return '<div class="h-date-group">'+header+body+'</div>';
   }).join('');
 }
 
@@ -1246,9 +1325,9 @@ function exportCSV(){
 function setRep(m,btn){repM=m;document.querySelectorAll('#rep-seg .sg').forEach(function(b){b.classList.remove('on')});btn.classList.add('on');renderR()}
 function renderR(){
   var n=new Date(),g={},labels=[],title='';
-  if(repM==='d'){title='Ultimos 14 dias';for(var i=13;i>=0;i--){var d=new Date(n);d.setDate(d.getDate()-i);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');labels.push(k.slice(5));g[k]=0}cOrds.forEach(function(o){if(g[o.dateStr]!==undefined)g[o.dateStr]+=o.total})}
-  else if(repM==='m'){title='Ano actual';var mo=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];for(var m=0;m<12;m++){var k=n.getFullYear()+'-'+(m+1<10?'0':'')+(m+1);labels.push(mo[m]);g[k]=0}cOrds.forEach(function(o){var k=o.dateStr.slice(0,7);if(g[k]!==undefined)g[k]+=o.total})}
-  else{title='Por ano';var yr=n.getFullYear();for(var y=yr-3;y<=yr;y++){labels.push(String(y));g[y]=0}cOrds.forEach(function(o){var y=+o.dateStr.slice(0,4);if(g[y]!==undefined)g[y]+=o.total})}
+  if(repM==='d'){title='Ultimos 14 dias';for(var i=13;i>=0;i--){var d=new Date(n);d.setDate(d.getDate()-i);var k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');labels.push(k.slice(5));g[k]=0}cOrds.forEach(function(o){var k=getLocalDateStr(o.date);if(g[k]!==undefined)g[k]+=o.total})}
+  else if(repM==='m'){title='Ano actual';var mo=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Set','Oct','Nov','Dic'];for(var m=0;m<12;m++){var k=n.getFullYear()+'-'+(m+1<10?'0':'')+(m+1);labels.push(mo[m]);g[k]=0}cOrds.forEach(function(o){var k=getLocalDateStr(o.date).slice(0,7);if(g[k]!==undefined)g[k]+=o.total})}
+  else{title='Por ano';var yr=n.getFullYear();for(var y=yr-3;y<=yr;y++){labels.push(String(y));g[y]=0}cOrds.forEach(function(o){var y=+getLocalDateStr(o.date).slice(0,4);if(g[y]!==undefined)g[y]+=o.total})}
   var vals=Object.values(g),total=vals.reduce(function(a,b){return a+b},0),cnt=cOrds.length,avg=cnt?total/cnt:0;
   document.getElementById('rmet').innerHTML='<div class="mc"><div class="ml">Total cobrado</div><div class="mv" style="color:var(--grn);font-size:17px">'+fmt(total)+'</div></div><div class="mc"><div class="ml">Ordenes</div><div class="mv">'+cnt+'</div></div><div class="mc span2"><div class="ml">Ticket promedio</div><div class="mv" style="color:var(--grn);font-size:17px">'+fmt(avg)+'</div></div>';
   document.getElementById('rchart-t').textContent=title;
