@@ -22,7 +22,10 @@
   --yel:#f59e0b;--yelbg:#1a1200;--yelt:#fde047;
   --org:#f97316;--mod:#1a1a1a;
 }
-html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;position:fixed;width:100%}
+html,body{height:100%;background:var(--bg);color:var(--t);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;position:fixed;width:100%;-webkit-text-size-adjust:100%;cursor:default}
+/* Safari fix: elements with onclick need cursor pointer */
+[onclick]{cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,0);touch-action:manipulation}
+button{cursor:pointer;-webkit-appearance:none;touch-action:manipulation}
 #wrap{display:flex;flex-direction:column;height:100vh;height:100dvh;width:100%}
 #screen{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:80px}
 #nav{position:fixed;bottom:0;left:0;right:0;background:#111;border-top:1px solid var(--b2);display:flex;align-items:stretch;padding-bottom:env(safe-area-inset-bottom,0px);z-index:100}
@@ -453,6 +456,7 @@ select.finp option{background:var(--bg3)}
   <div class="stitle">Datos</div>
   <div style="margin:0 16px 20px;border:1px solid var(--b2);border-radius:14px;overflow:hidden">
     <div class="cfg-row" onclick="exportCSV()"><div><div class="cfg-lbl">&#x1F4CA; Exportar CSV</div><div class="cfg-sub">Descargar historial</div></div><span class="cfg-arrow">›</span></div>
+    <div class="cfg-row" onclick="exportBackupJSON()"><div><div class="cfg-lbl">&#x1F4BE; Backup JSON</div><div class="cfg-sub" id="last-backup-txt">Descargar copia de seguridad completa</div></div><span class="cfg-arrow">›</span></div>
     <div class="cfg-row" onclick="forcSync()"><div><div class="cfg-lbl">&#x1F504; Sincronizar ahora</div><div class="cfg-sub">Forzar sincronizacion con la nube</div></div><span class="cfg-arrow">›</span></div>
     <div class="cfg-row" onclick="openResetOrders()" style="border-top:1px solid var(--rbg)"><div><div class="cfg-lbl" style="color:var(--rt)">&#x1F9F9; Borrar todos los pedidos</div><div class="cfg-sub">Elimina ordenes activas e historial. El menu no cambia.</div></div><span class="cfg-arrow" style="color:var(--rt)">›</span></div>
   </div>
@@ -782,6 +786,76 @@ function openCfgRecovery(){
 function saveRecovery(){var q=document.getElementById('rec-question').value,a=document.getElementById('rec-answer').value.trim();if(!a){document.getElementById('cfg-rec-err').textContent='Escribe una respuesta.';return}localStorage.setItem(REC_KEY,JSON.stringify({question:q,answer:a}));closeS('sh-cfg-rec');toast('Pregunta secreta guardada')}
 function bioSetup(){if(!bioAvail){alert('La biometria no esta disponible en este dispositivo.');return}bioAuth()}
 function forcSync(){if(isOnline){pendingSync=true;syncToCloud()}else{toast('Sin conexion a internet','warn')}}
+
+// ── BACKUP JSON ───────────────────────────────────────────────────────────────
+var BACKUP_KEY='smc_last_backup';
+var autoBackupTimer=null;
+
+function exportBackupJSON(){
+  var data={
+    exportDate: new Date().toISOString(),
+    exportDateLocal: new Date().toLocaleString('es-CR'),
+    version: '4.0',
+    menu: menu,
+    activeOrders: aOrds,
+    closedOrders: cOrds,
+    nextOId: nextOId,
+    nextMId: nextMId
+  };
+  var json=JSON.stringify(data, null, 2);
+  var ts=new Date().toLocaleDateString('es-CR').replace(/\//g,'-');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([json],{type:'application/json'}));
+  a.download='sodameyca_backup_'+ts+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  // Guardar timestamp del ultimo backup
+  localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+  updateBackupText();
+  toast('Backup descargado');
+}
+
+function updateBackupText(){
+  var last=localStorage.getItem(BACKUP_KEY);
+  var el=document.getElementById('last-backup-txt');
+  if(!el)return;
+  if(last){
+    var d=new Date(last);
+    el.textContent='Ultimo: '+d.toLocaleDateString('es-CR')+' '+d.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'});
+  }else{
+    el.textContent='Descargar copia de seguridad completa';
+  }
+}
+
+function startAutoBackup(){
+  // Backup automatico cada 6 horas si hay datos
+  clearInterval(autoBackupTimer);
+  autoBackupTimer=setInterval(function(){
+    if(cOrds.length>0||aOrds.length>0){
+      // Guardar backup en localStorage silenciosamente
+      var data={
+        exportDate:new Date().toISOString(),
+        version:'4.0',
+        menu:menu,
+        activeOrders:aOrds,
+        closedOrders:cOrds,
+        nextOId:nextOId,
+        nextMId:nextMId
+      };
+      try{
+        localStorage.setItem('smc_auto_backup',JSON.stringify(data));
+        localStorage.setItem(BACKUP_KEY, new Date().toISOString());
+        updateBackupText();
+      }catch(e){}
+    }
+  }, 6*60*60*1000); // cada 6 horas
+  // Tambien guardar backup inmediatamente al iniciar si hay datos
+  setTimeout(function(){
+    if(cOrds.length>0||aOrds.length>0){
+      var data={exportDate:new Date().toISOString(),version:'4.0',menu:menu,activeOrders:aOrds,closedOrders:cOrds,nextOId:nextOId,nextMId:nextMId};
+      try{localStorage.setItem('smc_auto_backup',JSON.stringify(data))}catch(e){}
+    }
+  },3000);
+}
 function openResetOrders(){
   document.getElementById('reset-pin').value='';
   document.getElementById('reset-err').textContent='';
@@ -829,6 +903,8 @@ async function saveCloud(){var r=await fetch(BIN_URL,{method:'PUT',headers:HDR_W
 
 function sched(){
   pendingSync=true;saveLocal();clearTimeout(saveTimer);
+  // Auto backup local en cada cambio
+  try{localStorage.setItem('smc_auto_backup',JSON.stringify({exportDate:new Date().toISOString(),version:'4.0',menu:menu,activeOrders:aOrds,closedOrders:cOrds,nextOId:nextOId,nextMId:nextMId}))}catch(e){}
   saveTimer=setTimeout(async function(){
     if(!isOnline){toast('Guardado localmente','warn');return}
     try{await saveCloud();clearPS();saveLocal();toast('Guardado')}catch(e){toast('Guardado localmente','warn')}
@@ -915,7 +991,7 @@ async function initApp(){
   if(!menu.length){menu=DM;nextMId=13;if(isOnline){try{await saveCloud()}catch(e){}}saveLocal()}
   document.getElementById('ls').style.display='none';
   document.getElementById('wrap').style.display='flex';
-  updateOnlineStatus();renderA();renderMet();renderH();renderR();renderM();renderK();startPolling();scheduleMidnightReset();
+  updateOnlineStatus();renderA();renderMet();renderH();renderR();renderM();renderK();startPolling();scheduleMidnightReset();startAutoBackup();updateBackupText();
   // Desregistrar cualquier service worker existente que pueda interferir con JSONBin
   if('serviceWorker' in navigator){
     navigator.serviceWorker.getRegistrations().then(function(regs){
