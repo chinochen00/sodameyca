@@ -1,4 +1,4 @@
-var CACHE = 'sodameyca-v3';
+var CACHE = 'sodameyca-v5';
 var BASE = '/sodameyca/';
 var ASSETS = [
   BASE,
@@ -47,15 +47,27 @@ self.addEventListener('fetch', function(e) {
     return;
   }
 
-  // Assets locales: cache-first
+  // index.html: siempre intentar red primero para tener version fresca
+  if (url.includes('index.html') || url.endsWith('/sodameyca/') || url.endsWith('/sodameyca')) {
+    e.respondWith(
+      fetch(e.request).then(function(res) {
+        var clone = res.clone();
+        caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
+        return res;
+      }).catch(function() {
+        return caches.match(e.request);
+      })
+    );
+    return;
+  }
+
+  // Otros assets: cache-first
   e.respondWith(
     caches.match(e.request).then(function(cached) {
       if (cached) return cached;
       return fetch(e.request).then(function(res) {
         var clone = res.clone();
-        caches.open(CACHE).then(function(cache) {
-          cache.put(e.request, clone);
-        });
+        caches.open(CACHE).then(function(cache) { cache.put(e.request, clone); });
         return res;
       });
     }).catch(function() {
