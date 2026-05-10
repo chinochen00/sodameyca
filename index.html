@@ -916,7 +916,12 @@ async function initApp(){
   document.getElementById('ls').style.display='none';
   document.getElementById('wrap').style.display='flex';
   updateOnlineStatus();renderA();renderMet();renderH();renderR();renderM();renderK();startPolling();scheduleMidnightReset();
-  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+  // Desregistrar cualquier service worker existente que pueda interferir con JSONBin
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      regs.forEach(function(reg){reg.unregister()});
+    });
+  }
 }
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
