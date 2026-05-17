@@ -343,7 +343,6 @@ select.finp option{background:var(--bg3)}
   </div>
   <div class="pin-error" id="pin-error"></div>
   <div class="pin-recover" onclick="startRecover()">Olvide mi PIN</div>
-  <div style="margin-top:14px;font-size:11px;color:var(--t3);text-align:center">PIN por defecto: <strong style="color:var(--t2)">123456</strong></div>
 </div>
 
 <div id="ls" style="display:none"><div class="spin"></div><div id="ls-msg" style="font-size:14px;color:var(--t2)">Cargando...</div></div>
@@ -523,18 +522,79 @@ select.finp option{background:var(--bg3)}
     <div class="sheet-hdr"><div class="sheet-title">Cobrar orden</div><button class="sheet-close" onclick="closeS('sh-pm')">&#x2715;</button></div>
     <div class="sheet-body">
       <div style="font-size:13px;color:var(--t2);margin-bottom:4px" id="pm-cd"></div>
-      <div class="tot-val" style="font-size:28px;margin-bottom:18px" id="pm-tt"></div>
-      <div class="frow"><label>Metodo de pago</label>
-        <div class="pm-row">
-          <button class="pmb on-ef" id="pm-ef" onclick="selPay('Efectivo')">&#x1F4B5;<br><span style="font-size:11px">Efectivo</span></button>
-          <button class="pmb" id="pm-ta" onclick="selPay('Tarjeta')">&#x1F4B3;<br><span style="font-size:11px">Tarjeta</span></button>
-          <button class="pmb" id="pm-si" onclick="selPay('SINPE')">&#x1F4F1;<br><span style="font-size:11px">SINPE</span></button>
+      <div class="tot-val" style="font-size:28px;margin-bottom:6px" id="pm-tt"></div>
+
+      <!-- Toggle pago dividido -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <span style="font-size:13px;color:var(--t2)">Pago dividido</span>
+        <button id="split-toggle" onclick="toggleSplit()"
+          style="background:var(--bg3);border:1px solid var(--b2);border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;font-family:inherit">
+          Activar
+        </button>
+      </div>
+
+      <!-- PAGO SIMPLE -->
+      <div id="pay-simple">
+        <div class="frow"><label>Metodo de pago</label>
+          <div class="pm-row">
+            <button class="pmb on-ef" id="pm-ef" onclick="selPay('Efectivo')">&#x1F4B5;<br><span style="font-size:11px">Efectivo</span></button>
+            <button class="pmb" id="pm-ta" onclick="selPay('Tarjeta')">&#x1F4B3;<br><span style="font-size:11px">Tarjeta</span></button>
+            <button class="pmb" id="pm-si" onclick="selPay('SINPE')">&#x1F4F1;<br><span style="font-size:11px">SINPE</span></button>
+          </div>
+        </div>
+        <div id="efsec">
+          <div class="frow"><label>Monto recibido (&#x20A1;)</label><input class="finp" type="number" id="monto" min="0" step="100" placeholder="ej. 5000" oninput="calcV()"></div>
+          <div class="vbar"><span style="font-size:14px;color:var(--t2);font-weight:600">Vuelto</span><span id="vuelto" style="font-size:22px;font-weight:700;color:var(--grn)">&#x20A1;0</span></div>
         </div>
       </div>
-      <div id="efsec">
-        <div class="frow"><label>Monto recibido (&#x20A1;)</label><input class="finp" type="number" id="monto" min="0" step="100" placeholder="ej. 5000" oninput="calcV()"></div>
-        <div class="vbar"><span style="font-size:14px;color:var(--t2);font-weight:600">Vuelto</span><span id="vuelto" style="font-size:22px;font-weight:700;color:var(--grn)">&#x20A1;0</span></div>
+
+      <!-- PAGO DIVIDIDO -->
+      <div id="pay-split" style="display:none">
+        <div style="background:var(--bg3);border:1px solid var(--b2);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+          <div style="font-size:12px;color:var(--t2);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Distribuir el total</div>
+          <!-- Efectivo -->
+          <div style="margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:20px">&#x1F4B5;</span>
+              <span style="font-size:14px;font-weight:600;color:var(--t);flex:1">Efectivo</span>
+            </div>
+            <input class="finp" type="number" id="split-ef" min="0" step="100" placeholder="&#x20A1;0" oninput="calcSplit()" style="padding:10px 12px;font-size:15px">
+          </div>
+          <!-- Tarjeta -->
+          <div style="margin-bottom:10px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:20px">&#x1F4B3;</span>
+              <span style="font-size:14px;font-weight:600;color:var(--t);flex:1">Tarjeta</span>
+            </div>
+            <input class="finp" type="number" id="split-ta" min="0" step="100" placeholder="&#x20A1;0" oninput="calcSplit()" style="padding:10px 12px;font-size:15px">
+          </div>
+          <!-- SINPE -->
+          <div style="margin-bottom:6px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+              <span style="font-size:20px">&#x1F4F1;</span>
+              <span style="font-size:14px;font-weight:600;color:var(--t);flex:1">SINPE</span>
+            </div>
+            <input class="finp" type="number" id="split-si" min="0" step="100" placeholder="&#x20A1;0" oninput="calcSplit()" style="padding:10px 12px;font-size:15px">
+          </div>
+        </div>
+        <!-- Pendiente y vuelto -->
+        <div id="split-status" style="background:var(--bg3);border:1px solid var(--b2);border-radius:12px;padding:12px 14px;margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+            <span style="color:var(--t2)">Total asignado</span>
+            <span id="split-assigned" style="font-weight:700;color:var(--t)">&#x20A1;0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px" id="split-pending-row">
+            <span style="color:var(--rt)">Pendiente</span>
+            <span id="split-pending" style="font-weight:700;color:var(--rt)">&#x20A1;0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:13px" id="split-change-row" style="display:none">
+            <span style="color:var(--gt)">Vuelto efectivo</span>
+            <span id="split-change" style="font-weight:700;color:var(--gt)">&#x20A1;0</span>
+          </div>
+        </div>
       </div>
+
+      <div id="pay-error" style="display:none;background:var(--rbg);border:1px solid #7f1d1d;border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px;font-weight:600;color:var(--rt);text-align:center"></div>
       <button class="pbtn" onclick="doPay()">Confirmar cobro</button>
       <button class="sbtn" onclick="closeS('sh-pm')">Cancelar</button>
     </div>
@@ -703,7 +763,19 @@ function fmt(n){return'\u20A1'+Math.round(parseFloat(n)).toLocaleString('es-CR')
 function closeS(id){document.getElementById(id).classList.remove('on');if(id==='sh-om')backL()}
 function openS(id){document.getElementById(id).classList.add('on')}
 function payColor(m){return m==='Efectivo'?'var(--gt)':m==='Tarjeta'?'var(--blut)':'var(--purt)'}
-function payBadge(m){var c=m==='Efectivo'?'pay-ef':m==='Tarjeta'?'pay-ta':m==='SINPE'?'pay-si':'';return c?'<span class="pay-badge '+c+'">'+m+'</span>':''}
+function payBadge(o){
+  if(!o)return'';
+  if(o.splitPayments){
+    var parts=[];
+    if(o.splitPayments.Efectivo>0)parts.push('<span class="pay-badge pay-ef">&#x1F4B5; '+fmt(o.splitPayments.Efectivo)+'</span>');
+    if(o.splitPayments.Tarjeta>0)parts.push('<span class="pay-badge pay-ta">&#x1F4B3; '+fmt(o.splitPayments.Tarjeta)+'</span>');
+    if(o.splitPayments.SINPE>0)parts.push('<span class="pay-badge pay-si">&#x1F4F1; '+fmt(o.splitPayments.SINPE)+'</span>');
+    return parts.join('');
+  }
+  var m=o.payMethod;
+  var c=m==='Efectivo'?'pay-ef':m==='Tarjeta'?'pay-ta':m==='SINPE'?'pay-si':'';
+  return c?'<span class="pay-badge '+c+'">'+m+'</span>':'';
+}
 function statusBadge(s){
   if(s==='En Progreso')return'<span class="status-badge sb-prog">&#x1F7E1; En Progreso</span>';
   if(s==='Completado')return'<span class="status-badge sb-done">&#x1F7E2; Completado</span>';
@@ -1112,26 +1184,93 @@ function saveO(){
 }
 
 // ── COBRO ─────────────────────────────────────────────────────────────────────
+var isSplit=false;
+
 function openPM(oid){
   payOId=oid;var o=aOrds.find(function(x){return x.id===oid});
   document.getElementById('pm-cd').textContent=o.code+(o.client?' \u00b7 '+o.client:'');
   document.getElementById('pm-tt').textContent=fmt(o.total);
-  document.getElementById('monto').value='';document.getElementById('vuelto').textContent=fmt(0);
-  selPay('Efectivo');openS('sh-pm');
+  document.getElementById('monto').value='';
+  document.getElementById('vuelto').textContent=fmt(0);
+  document.getElementById('split-ef').value='';
+  document.getElementById('split-ta').value='';
+  document.getElementById('split-si').value='';
+  isSplit=false;
+  document.getElementById('pay-simple').style.display='block';
+  document.getElementById('pay-split').style.display='none';
+  document.getElementById('split-toggle').textContent='Activar';
+  document.getElementById('split-toggle').style.color='var(--t2)';
+  clearPayError();
+  selPay('Efectivo');
+  openS('sh-pm');
 }
+
+function toggleSplit(){
+  isSplit=!isSplit;
+  document.getElementById('pay-simple').style.display=isSplit?'none':'block';
+  document.getElementById('pay-split').style.display=isSplit?'block':'none';
+  document.getElementById('split-toggle').textContent=isSplit?'Desactivar':'Activar';
+  document.getElementById('split-toggle').style.color=isSplit?'var(--gt)':'var(--t2)';
+  if(isSplit)calcSplit();
+}
+
+function calcSplit(){
+  var o=aOrds.find(function(x){return x.id===payOId});if(!o)return;
+  var ef=parseFloat(document.getElementById('split-ef').value)||0;
+  var ta=parseFloat(document.getElementById('split-ta').value)||0;
+  var si=parseFloat(document.getElementById('split-si').value)||0;
+  var assigned=ef+ta+si;
+  var pending=o.total-assigned;
+  var change=assigned>o.total?assigned-o.total:0;
+  document.getElementById('split-assigned').textContent=fmt(assigned);
+  document.getElementById('split-pending').textContent=pending>0?fmt(pending):fmt(0);
+  document.getElementById('split-pending-row').style.display=pending>0?'flex':'none';
+  document.getElementById('split-change-row').style.display=change>0?'flex':'none';
+  if(change>0)document.getElementById('split-change').textContent=fmt(change);
+}
+
+function showPayError(msg){var e=document.getElementById('pay-error');e.textContent=msg;e.style.display='block'}
+function clearPayError(){var e=document.getElementById('pay-error');if(e)e.style.display='none'}
 function selPay(m){
   payM=m;
   var B={Efectivo:'pm-ef',Tarjeta:'pm-ta',SINPE:'pm-si'},C={Efectivo:'on-ef',Tarjeta:'on-ta',SINPE:'on-si'};
   Object.keys(B).forEach(function(k){document.getElementById(B[k]).className='pmb'+(k===m?' '+C[k]:'')});
   document.getElementById('efsec').style.display=m==='Efectivo'?'block':'none';
 }
+
 function calcV(){var o=aOrds.find(function(x){return x.id===payOId});if(!o)return;var r=parseFloat(document.getElementById('monto').value)||0;document.getElementById('vuelto').textContent=fmt(Math.max(0,r-o.total))}
+
 function doPay(){
+  clearPayError();
   var idx=aOrds.findIndex(function(x){return x.id===payOId});if(idx<0)return;
   var o=aOrds[idx];
-  var mr=payM==='Efectivo'?parseFloat(document.getElementById('monto').value)||0:0;
-  if(payM==='Efectivo'&&mr>0&&mr<o.total){alert('El monto recibido es menor al total.');return}
-  o.payMethod=payM;o.montoRecibido=mr;o.vuelto=payM==='Efectivo'?Math.max(0,mr-o.total):0;o.status='cerrada';
+
+  if(isSplit){
+    var ef=parseFloat(document.getElementById('split-ef').value)||0;
+    var ta=parseFloat(document.getElementById('split-ta').value)||0;
+    var si=parseFloat(document.getElementById('split-si').value)||0;
+    var assigned=ef+ta+si;
+    if(assigned<o.total){
+      showPayError('El monto asignado ('+fmt(assigned)+') es menor al total. Falta: '+fmt(o.total-assigned));
+      return;
+    }
+    var change=assigned>o.total?assigned-o.total:0;
+    o.splitPayments={Efectivo:ef,Tarjeta:ta,SINPE:si};
+    o.payMethod='Dividido';
+    o.montoRecibido=assigned;
+    o.vuelto=change;
+  }else{
+    var mr=payM==='Efectivo'?parseFloat(document.getElementById('monto').value)||0:0;
+    if(payM==='Efectivo'&&mr>0&&mr<o.total){
+      showPayError('El monto recibido ('+fmt(mr)+') es menor al total. Falta: '+fmt(o.total-mr));
+      return;
+    }
+    o.payMethod=payM;
+    o.montoRecibido=mr;
+    o.vuelto=payM==='Efectivo'?Math.max(0,mr-o.total):0;
+    o.splitPayments=null;
+  }
+  o.status='cerrada';
   aOrds.splice(idx,1);cOrds.unshift(o);
   sched();closeS('sh-pm');showReceipt(o.id);renderA();renderMet();renderH();renderR();renderK();
 }
@@ -1363,7 +1502,7 @@ function renderH(){
             '<span style="font-family:monospace;font-size:13px;font-weight:700;color:var(--t)">'+o.code+'</span>'+
             (o.client?'<span style="font-size:13px;color:var(--org);font-weight:600">'+o.client+'</span>':'')+
             '<span style="font-size:11px;color:var(--t2)">'+o.date.toLocaleTimeString('es-CR',{hour:'2-digit',minute:'2-digit'})+'</span>'+
-            payBadge(o.payMethod)+
+            payBadge(o)+
             (o.orderType?typeBadge(o.orderType):'')+
           '</div>'+
           '<div style="font-size:12px;color:var(--t3)">'+o.items.map(function(i){return i.name+(i.sizeLabel?' ('+i.sizeLabel+')':'')+' x'+i.qty}).join(' \u00b7 ')+'</div>'+
@@ -1411,9 +1550,16 @@ function showReceipt(oid){
   document.getElementById('rcode').textContent=o.code;
   var cr=document.getElementById('rcrow');if(o.client){cr.style.display='flex';document.getElementById('rcl').textContent=o.client}else cr.style.display='none';
   var tr=document.getElementById('rtrow');if(o.orderType){tr.style.display='flex';document.getElementById('rtype').textContent=o.orderType}else tr.style.display='none';
-  var pr=document.getElementById('rpay-r');pr.textContent=o.payMethod||'--';pr.style.color=payColor(o.payMethod);
+  var pr=document.getElementById('rpay-r');
+  if(o.splitPayments){
+    pr.innerHTML='<span style="color:var(--gt)">&#x1F4B5; '+fmt(o.splitPayments.Efectivo||0)+'</span> <span style="color:var(--blut)">&#x1F4B3; '+fmt(o.splitPayments.Tarjeta||0)+'</span> <span style="color:var(--purt)">&#x1F4F1; '+fmt(o.splitPayments.SINPE||0)+'</span>';
+    pr.style.color='';
+  }else{
+    pr.textContent=o.payMethod||'--';pr.style.color=payColor(o.payMethod);
+  }
   var mr=document.getElementById('rmrow'),vr=document.getElementById('rvrow');
-  if(o.payMethod==='Efectivo'&&o.montoRecibido>0){mr.style.display='flex';document.getElementById('rmonto').textContent=fmt(o.montoRecibido);vr.style.display='flex';document.getElementById('rvuelto').textContent=fmt(o.vuelto||0)}
+  if(!o.splitPayments&&o.payMethod==='Efectivo'&&o.montoRecibido>0){mr.style.display='flex';document.getElementById('rmonto').textContent=fmt(o.montoRecibido);vr.style.display='flex';document.getElementById('rvuelto').textContent=fmt(o.vuelto||0)}
+  else if(o.splitPayments&&o.vuelto>0){mr.style.display='flex';document.getElementById('rmonto').textContent=fmt(o.montoRecibido);vr.style.display='flex';document.getElementById('rvuelto').textContent=fmt(o.vuelto)}
   else{mr.style.display='none';vr.style.display='none'}
   document.getElementById('ritems').innerHTML=o.items.map(function(i){
     return '<tr><td style="padding:7px 0;color:var(--t);background:var(--mod)">'+i.name+(i.sizeLabel?' <span class="stag">'+i.sizeLabel+'</span>':'')+(i.notas?'<br><span style="font-size:11px;color:var(--yelt)">&#x1F4DD; '+i.notas+'</span>':'')+'</td>'+
@@ -1557,7 +1703,16 @@ function renderR(){
 
   // ── Metodo de pago (solo periodo filtrado) ────────────────────
   var ps={Efectivo:{c:0,t:0},Tarjeta:{c:0,t:0},SINPE:{c:0,t:0}};
-  filteredOrds.forEach(function(o){if(ps[o.payMethod]){ps[o.payMethod].c++;ps[o.payMethod].t+=o.total}});
+  filteredOrds.forEach(function(o){
+    if(o.splitPayments){
+      // Pago dividido: distribuir montos a cada metodo
+      if(o.splitPayments.Efectivo>0){ps.Efectivo.t+=o.splitPayments.Efectivo;ps.Efectivo.c+=o.splitPayments.Efectivo/o.total}
+      if(o.splitPayments.Tarjeta>0){ps.Tarjeta.t+=o.splitPayments.Tarjeta;ps.Tarjeta.c+=o.splitPayments.Tarjeta/o.total}
+      if(o.splitPayments.SINPE>0){ps.SINPE.t+=o.splitPayments.SINPE;ps.SINPE.c+=o.splitPayments.SINPE/o.total}
+    }else if(ps[o.payMethod]){
+      ps[o.payMethod].c++;ps[o.payMethod].t+=o.total;
+    }
+  });
   var clr={Efectivo:'#22c55e',Tarjeta:'#3b82f6',SINPE:'#a855f7'};
   var icn={Efectivo:'&#x1F4B5;',Tarjeta:'&#x1F4B3;',SINPE:'&#x1F4F1;'};
   var totP=Math.max(1,cnt);
